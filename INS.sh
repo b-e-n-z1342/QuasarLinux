@@ -20,7 +20,7 @@ fi
 # Выбор диска
 echo "Доступные диски:"
 lsblk -d -o NAME,SIZE,MODEL
-read -p "Введите имя диска (например, sda/nvme0n1): " DISK
+read -p "Введите имя диска (например, sda/sdb): " DISK
 DISK="/dev/$DISK"
 
 # Проверка существования диска
@@ -30,88 +30,88 @@ if [ ! -e "$DISK" ]; then
 fi
 
 # Выбор схемы разметки
-PS3='Выберите схему разметки: '
-options=("MBR (BIOS)" "GPT (UEFI)" "Отмена")
-select opt in "${options[@]}"
-do
-    case $opt in
-        "MBR (BIOS)")
-            SCHEME="mbr"
-            break
-            ;;
-        "GPT (UEFI)")
-            SCHEME="gpt"
-            break
-            ;;
-        "Отмена")
-            echo "Отмена операции"
-            exit 0
-            ;;
+#PS3='Выберите схему разметки: '
+#options=("MBR (BIOS)" "GPT (UEFI)" "Отмена")
+$select opt in "${options[@]}"
+#do
+#    case $opt in
+#        "MBR (BIOS)")
+ #           SCHEME="mbr"
+    #        break
+   #         ;;
+   #     "GPT (UEFI)")
+  #          SCHEME="gpt"
+   #         break
+   #         ;;
+   #     "Отмена")
+  #          echo "Отмена операции"
+  #          exit 0
+    #        ;;
         *) echo "Неправильный вариант";;
-    esac
-done
+#    esac
+#done
 
 # Подтверждение
-read -p "ВСЕ ДАННЫЕ НА $DISK БУДУТ УДАЛЕНЫ! Продолжить? (y/N): " confirm
-if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-    echo "Отмена"
-    exit 0
-fi
+#read -p "ВСЕ ДАННЫЕ НА $DISK БУДУТ УДАЛЕНЫ! Продолжить? (y/N): " confirm
+#if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+  #  echo "Отмена"
+#    exit 0
+#fi
 
 # Очистка диска
-wipefs -a -f $DISK
-partprobe $DISK
+#wipefs -a -f $DISK
+#partprobe $DISK
 
 # Разметка диска
-case $SCHEME in
-    "mbr")
-        # Создание разделов MBR
-        parted -s $DISK mklabel msdos
-        parted -s $DISK mkpart primary 1MiB 513MiB
-        parted -s $DISK set 1 boot on
-        parted -s $DISK mkpart primary 513MiB 100%
-        ;;
-    "gpt")
-        # Создание разделов GPT
-        parted -s $DISK mklabel gpt
-        parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
-        parted -s $DISK set 1 esp on
-        parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
-        ;;
-esac
+#case $SCHEME in
+#    "mbr")
+#        # Создание разделов MBR
+ #      parted -s $DISK mklabel msdos
+    #   parted -s $DISK mkpart primary 1MiB 513MiB
+   #     parted -s $DISK set 1 boot on
+   #     parted -s $DISK mkpart primary 513MiB 100%
+   #     ;;
+  #  "gpt")
+#        # Создание разделов GPT
+#        parted -s $DISK mklabel gpt
+ #       parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
+  #      parted -s $DISK set 1 esp on
+  #      parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
+  #      ;;
+#esac
 
 # Форматирование разделов
-case $SCHEME in
-    "mbr")
-        mkfs.ext4 ${DISK}1
-        mkfs.ext4 ${DISK}2
+#case $SCHEME in
+  #  "mbr")
+ #       mkfs.ext4 ${DISK}1
+  #      mkfs.ext4 ${DISK}2
         ;;
-    "gpt")
-        mkfs.fat -F32 ${DISK}1
-        mkfs.ext4 ${DISK}2
-        ;;
-esac
+#    "gpt")
+#        mkfs.fat -F32 ${DISK}1
+#        mkfs.ext4 ${DISK}2
+  #      ;;
+#esac
 
 # Монтирование
-mount ${DISK}2 /mnt
-case $SCHEME in
-    "mbr")
-        mkdir -p /mnt/boot
-        mount ${DISK}1 /mnt/boot
-        ;;
-    "gpt")
-        mkdir -p /mnt/boot/efi
-        mount ${DISK}1 /mnt/boot/efi
-        ;;
-esac
+#mount ${DISK}2 /mnt
+#case $SCHEME in
+#$    "mbr")
+ #       mkdir -p /mnt/boot
+#        mount ${DISK}1 /mnt/boot
+#        ;;
+#    "gpt")
+#        mkdir -p /mnt/boot/efi
+  #      mount ${DISK}1 /mnt/boot/efi
+  #      ;;
+#esac
 
 # Проверка
-echo " "
-echo "Результат разметки:"
-lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
-echo " "
-echo "Диск успешно подготовлен! смонтированно в /mnt"
-echo "сейчас произведётся система Quasar-BASE, после этого вам предложится настройка"
+#echo " "
+#echo "Результат разметки:"
+#lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
+#echo " "
+#echo "Диск успешно подготовлен! смонтированно в /mnt"
+#echo "сейчас произведётся система Quasar-BASE, после этого вам предложится настройка"
 
 
 basestrap /mnt base base-devel openrc elogind-openrc linux-zen linux-firmware-zen sudo vim nano grub os-prober efibootmgr dhcpcd wpasupplicant connman-openrc connman-gtk
