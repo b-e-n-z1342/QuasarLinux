@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 echo "
 ██████╗ ██╗   ██╗ █████╗ ███████╗ █████╗ ██████╗ 
 ██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔══██╗██╔══██╗
@@ -17,10 +16,19 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+# Проверка поддержки UEFI
+if [ -d /sys/firmware/efi/efivars ]; then
+    echo "Обнаружен режим загрузки: UEFI"
+    UEFI_MODE=1
+else
+    echo "Обнаружен режим загрузки: BIOS"
+    UEFI_MODE=0
+fi
+
 # Выбор диска
 echo "Доступные диски:"
-lsblk -d -o NAME,SIZE,MODEL
-read -p "Введите имя диска (например, sda/sdb): " DISK
+lsblk -d -o NAME,SIZE,MODEL,TYPE
+read -p "Введите имя диска (например, sda/nvme0n1): " DISK
 DISK="/dev/$DISK"
 
 # Проверка существования диска
@@ -29,140 +37,144 @@ if [ ! -e "$DISK" ]; then
     exit 1
 fi
 
-# Выбор схемы разметки
-PS3='Выберите схему разметки: '
-options=("MBR (BIOS)" "GPT (UEFI)" "Отмена")
-$select opt in "${options[@]}"
-do
-    case $opt in
-        "MBR (BIOS)")
-            SCHEME="mbr"
-            break
-            ;;
-        "GPT (UEFI)")
-            SCHEME="gpt"
-            break
-            ;;
-        "Отмена")
-            echo "Отмена операции"
-            exit 0
-            ;;
-        *) echo "Неправильный вариант";;
-    esac
-    done
-
 # Подтверждение
 read -p "ВСЕ ДАННЫЕ НА $DISK БУДУТ УДАЛЕНЫ! Продолжить? (y/N): " confirm
-if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     echo "Отмена"
     exit 0
 fi
 
- #Очистка диска
+# Очистка диска
+echo "Очистка диска..."
 wipefs -a -f $DISK
 partprobe $DISK
 
 # Разметка диска
-case $SCHEME in
-    "mbr")
-        # Создание разделов MBR
-        parted -s $DISK mklabel msdos
-        parted -s $DISK mkpart primary 1MiB 513MiB
-        parted -s $DISK set 1 boot on
-        parted -s $DISK mkpart primary 513MiB 100%
-        ;;
-    "gpt")
-        # Создание разделов GPT
-        parted -s $DISK mklabel gpt
-        parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
-        parted -s $DISK set 1 esp on
-        parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
-        ;;
-esac
+if [ $UEFI_MODE -eq 1 ]; then
+    echo "Создание GPT разметки..."
+    parted -s $DISK mklabel gpt
+    parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
+    parted -s $DISK set 1 esp on
+    parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
+    PART_BOOT="${DISK}p1"
+    PART_ROOT="${DISK}p2"
+else
+    echo "Создание MBR разметки..."
+    parted -s $DISK mklabel msdos
+    parted -s $DISK mkpart primary ext4 1MiB 513MiB
+    parted -s $DISK set 1 boot on
+    parted -s $DISK mkpart primary ext4 513MiB 100%
+    PART_BOOT="${DISK}1"
+    PART_ROOT="${DISK}2"
+fi
 
 # Форматирование разделов
-case $SCHEME in
-    "mbr")
-        mkfs.ext4 ${DISK}1
-        mkfs.ext4 ${DISK}2
-        ;;
-    "gpt")
-        mkfs.fat -F32 ${DISK}1
-        mkfs.ext4 ${DISK}2
-        ;;
-esac
+echo "Форматирование разделов..."
+if [ $UEFI_MODE -eq 1 ]; then
+    mkfs.fat -F32 $PART_BOOT
+else
+    mkfs.ext4 $PART_BOOT
+fi
+mkfs.ext4 $PART_ROOT
 
 # Монтирование
-mount ${DISK}2 /mnt
-case $SCHEME in
-    "mbr")
-        mkdir -p /mnt/boot
-        mount ${DISK}1 /mnt/boot
-        ;;
-    "gpt")
-        mkdir -p /mnt/boot/efi
-        mount ${DISK}1 /mnt/boot/efi
-        ;;
-esac
+echo "Монтирование разделов..."
+mount $PART_ROOT /mnt
+if [ $UEFI_MODE -eq 1 ]; then
+    mkdir -p /mnt/boot/efi
+    mount $PART_BOOT /mnt/boot/efi
+else
+    mkdir -p /mnt/boot
+    mount $PART_BOOT /mnt/boot
+fi
 
 # Проверка
 echo " "
 echo "Результат разметки:"
 lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
 echo " "
-echo "Диск успешно подготовлен! смонтированно в /mnt"
-echo "сейчас произведётся система Quasar-BASE, после этого вам предложится настройка"
 
+# Установка базовой системы
+echo "Установка базовой системы..."
+basestrap /mnt base base-devel openrc elogind-openrc \
+    linux-zen \
+    sudo nano grub os-prober efibootmgr \
+    dhcpcd connman-openrc
 
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen linux-firmware-zen sudo vim nano grub os-prober efibootmgr dhcpcd wpasupplicant connman-openrc connman-gtk
+# Настройка fstab
+echo "Генерация fstab..."
+fstabgen -U /mnt >> /mnt/etc/fstab
+cp -r /etc/pacman.conf /mnt/etc/
 
-if ! mount | grep -q '/mnt '; then
-    echo "Система не смонтирована в /mnt! Сначала выполните разметку и монтирование."
-    exit 1
-fi
+# Chroot-секция
+echo "Переход в chroot-окружение..."
+cat << EOF | artix-chroot /mnt /bin/bash
 
-#!/bin/bash
+# Настройка времени
+ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+hwclock --systohc
 
-# UEFI
-if [ -d /sys/firmware/efi ]; then
-    echo "Detected UEFI mode. Installing GRUB..."
-    # GRUB
-    basestrap /mnt grub efibootmgr
-    artix-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=MyDistro
-    artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+# Локализация
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
+
+# Сеть
+echo "quasar" > /etc/hostname
+echo "127.0.0.1 localhost" >> /etc/hosts
+echo "::1 localhost" >> /etc/hosts
+echo "127.0.1.1 quasar.localdomain quasar" >> /etc/hosts
+
+# Пароль root
+echo "Установка пароля root:"
+passwd
+
+# Пользователь
+read -p "Введите имя нового пользователя: " username
+useradd -m -G wheel -s /bin/bash \$username
+echo "Установка пароля для пользователя \$username:"
+passwd \$username
+
+# Sudo
+echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
+
+# Загрузчик
+if [ $UEFI_MODE -eq 1 ]; then
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Quasar
 else
-    echo "Detected BIOS mode. Installing Syslinux..."
-    #Syslinux
-    basestrap /mnt syslinux
-    artix-chroot /mnt syslinux-install_update -i -a -m
+    grub-install $DISK
 fi
-sed -i '/\[lib32\]/s/^#//' /mnt/etc/pacman.conf && sed -i '/Include/s/^#//' /mnt/etc/pacman.conf
-artix-chroot /mnt
+grub-mkconfig -o /boot/grub/grub.cfg
 
-artix-chroot /mnt pacman -S $(cat pakege-list)
-gpu_info=$(lspci -nn | grep -i 'VGA\|3D\|Display')
-
-if echo "$gpu_info" | grep -qi "AMD"; then
-        echo "Обнаружена видеокарта AMD"
-        artix-chroot /mnt pacman -S $(cat pakege-amd)
-    
-elif echo "$gpu_info" | grep -qi "Intel"; then
-	echo "Обнаружена видеокарта Intel"
-	artix-chroot /mnt pacman -S $(cat pakege-intel)
-    
-elif echo "$gpu_info" | grep -qi "NVIDIA"; then
-	echo "Обнаружена видеокарта NVIDIA"
-	echo "не поддерживается"
-	exit 1;
-    
+# Драйверы GPU
+gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
+if echo "\$gpu_info" | grep -qi "AMD"; then
+    echo "Обнаружена видеокарта AMD"
+    pacman -S --noconfirm $(cat pakege-amd)
+elif echo "\$gpu_info" | grep -qi "Intel"; then
+    echo "Обнаружена видеокарта Intel"
+    pacman -S --noconfirm $(cat pakege-intel)
+elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
+    echo "Обнаружена видеокарта NVIDIA"
+    pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils
 else
-	echo "Видеокарта не определена! Информация:"
-	echo "$gpu_info"
-	echo "режим virgl"
+    echo "Видеокарта не определена"
 fi
 
-artix-chroot /mnt pacman -S $(cat pakege-list)
+# Дополнительные пакеты
+pacman -S --noconfirm xorg xorg-xinit plasma dolphin konsole  \
+    firefox pipewire pavucontrol networkmanager networkmanager-openrc
 
+# Сервисы
+rc-update add connmand
+rc-update add lightdm
+rc-update add NetworkManager
+rc-update add elogind
 
-echo "первый этап завершён"
-echo "это бета, выход!"
+EOF
+
+# Завершение
+echo "Установка завершена!"
+echo "Вы можете перезагрузить систему командой: reboot"
+echo "Не забудьте извлечь установочный носитель"
