@@ -66,8 +66,8 @@ partprobe $DISK
 case $SCHEME in
     "mbr")
         # Создание разделов MBR
-       parted -s $DISK mklabel msdos
-       parted -s $DISK mkpart primary 1MiB 513MiB
+        parted -s $DISK mklabel msdos
+        parted -s $DISK mkpart primary 1MiB 513MiB
         parted -s $DISK set 1 boot on
         parted -s $DISK mkpart primary 513MiB 100%
         ;;
