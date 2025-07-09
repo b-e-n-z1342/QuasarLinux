@@ -82,7 +82,7 @@ echo "Монтирование разделов..."
 mount $PART_ROOT /mnt
 if [ $UEFI_MODE -eq 1 ]; then
     mkdir -p /mnt/boot/efi
-    mount $PART_BOOT /mnt/boot/efi
+    mount $PART_BOOT /mnt/boartix-chroot /mntot/efi
 else
     mkdir -p /mnt/boot
     mount $PART_BOOT /mnt/boot
@@ -168,7 +168,7 @@ pacman -S --noconfirm xorg xorg-xinit plasma dolphin konsole  \
 
 # Сервисы
 rc-update add connmand
-rc-update add lightdm
+rc-update add sddm
 rc-update add NetworkManager
 rc-update add elogind
 
