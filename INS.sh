@@ -101,7 +101,7 @@ basestrap /mnt base base-devel openrc elogind-openrc \
     sudo nano grub os-prober efibootmgr \
     dhcpcd connman-openrc
 
-read -p "Введите имя нового пользователя: " USERNAME
+
 
 # Настройка fstab
 echo "Генерация fstab..."
@@ -109,10 +109,23 @@ fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 
 cp pakege-amd pakege-intel /mnt/
+read -p "Введите имя нового пользователя: " USERNAME
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
-cat << EOF | artix-chroot /mnt /bin/bash
+artix-chroot /mnt /bin/bash -i << EOF
+echo "придумайте пароль для root!"
+passwd 
+
+# Пользователь
+echo "Давайте создадим пользователя"
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+echo "Установка пароля для пользователя "$USERNAME":"
+passwd "$USERNAME"
+
+# Sudo
+echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
+
 
 # Настройка времени
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
