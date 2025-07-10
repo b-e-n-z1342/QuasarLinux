@@ -1,0 +1,35 @@
+#!/bin/bash
+# quasar-install - Official Quasar Linux Installer
+
+# Проверка на Live-систему
+if ! grep -q "QuasarLinux" /etc/os-release 2>/dev/null; then
+    echo "Ошибка: Эта утилита должна запускаться только с Live-системы Quasar Linux!"
+    exit 1
+fi
+
+# Проверка интернета
+if ! ping -c 1 google.com &> /dev/null; then
+    echo "Ошибка: Требуется интернет-соединение!"
+    echo "Проверьте: rfkill unblock wifi && connmanctl"
+    exit 1
+fi
+# Клонирование репозитория
+REPO_URL="https://github.com/b-e-n-z1342/QuasarLinux.git"
+CLONE_DIR="$HOME/QuasarLinux"
+
+echo "Клонирование репозитория Quasar Linux..."
+git clone "$REPO_URL" "$CLONE_DIR" || {
+    echo "Ошибка клонирования! Проверьте URL и доступ в интернет."
+    exit 1
+}
+
+# Запуск установщика
+cd "$CLONE_DIR" || exit 1
+
+if [ -f "INS.sh" ]; then
+    echo "Запуск установщика..."
+    sudo bash INS.sh
+else
+    echo "Ошибка: INS.sh не найден в репозитории!"
+    exit 1
+fi
