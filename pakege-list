@@ -41,9 +41,17 @@ gst-plugins-good
 gst-plugins-bad 
 
 gst-plugins-ugly
+
 xorg 
+
 xorg-xinit 
+
 pavucontrol 
+
 networkmanager 
+
 networkmanager-openrc
 
+sddm
+
+sddm-openrc
