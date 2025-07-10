@@ -109,7 +109,7 @@ fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 
 cp pakege-amd pakege-intel /mnt/
-read -p "Введите имя нового пользователя: " USERNAME
+#read -p "Введите имя нового пользователя: " USERNAME
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
@@ -122,6 +122,10 @@ echo "Давайте создадим пользователя"
 useradd -m -G wheel -s /bin/bash "$USERNAME"
 echo "Установка пароля для пользователя "$USERNAME":"
 passwd "$USERNAME"
+mkdir /home/$USERNAME
+mkdir /home/$USERNAME/Desktop 
+# Sudo
+echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
@@ -147,16 +151,6 @@ PRETTY_NAME="Quasar Linux (artix base)"
 ID=quasar
 ID_LIKE=artix
 ANACONDA_ID="quasar"' > /etc/os-release
-
-echo "root:password" | chpasswd
-
-# Пользователь
-useradd -m -G wheel -s /bin/bash "$USERNAME"
-echo "Установка пароля для пользователя "$USERNAME":"
-passwd "$USERNAME"
-
-# Sudo
-echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
 # Загрузчик
 if [ $UEFI_MODE -eq 1 ]; then
