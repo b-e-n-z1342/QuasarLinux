@@ -109,21 +109,15 @@ fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 
 cp pakege-amd pakege-intel /mnt/
-#read -p "Введите имя нового пользователя: " USERNAME
+read -p "Введите имя нового пользователя: " USERNAME
+
+artix-chroot /mnt /bin/bash -c "passwd" 
+artix-chroot /mnt /bin/bash -c "passwd $USERNAME"
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
-artix-chroot /mnt /bin/bash -i << EOF
-echo "придумайте пароль для root!"
-passwd 
+artix-chroot /mnt /bin/bash << EOF
 
-# Пользователь
-echo "Давайте создадим пользователя"
-useradd -m -G wheel -s /bin/bash "$USERNAME"
-echo "Установка пароля для пользователя "$USERNAME":"
-passwd "$USERNAME"
-mkdir /home/$USERNAME
-mkdir /home/$USERNAME/Desktop 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
