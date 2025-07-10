@@ -111,12 +111,22 @@ cp /etc/pacman.conf /mnt/etc/
 cp pakege-amd pakege-intel /mnt/
 read -p "Введите имя нового пользователя: " USERNAME
 
-artix-chroot /mnt /bin/bash -c "passwd" 
-artix-chroot /mnt /bin/bash -c "passwd $USERNAME"
+PASSWORD_HASH=$(openssl passwd -6 "quasar")
+
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
 artix-chroot /mnt /bin/bash << EOF
+
+chmod 600 /etc/{shadow,gshadow}
+chown root:root /etc/{shadow,gshadow}
+
+# Создание пользователя
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+
+# Установка паролей
+usermod -p "$PASSWORD_HASH" root
+usermod -p "$PASSWORD_HASH" "$USERNAME"
 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
