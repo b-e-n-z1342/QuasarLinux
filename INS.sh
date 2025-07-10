@@ -176,15 +176,21 @@ else
 fi
 
 # Дополнительные пакеты
-pacman -S --noconfirm xorg xorg-xinit plasma dolphin konsole  \
-    firefox pipewire pavucontrol networkmanager networkmanager-openrc
-
+pacman -S --noconfirm $(cat pakege-list)
+    
 # Сервисы
+rc-update add dbus
+rc-update add udev
 rc-update add connmand
-rc-update add sddm
 rc-update add NetworkManager
 rc-update add elogind
+rc-update add sddm
 
+EOF
+
+artix-chroot /mnt cat > /etc/environment << EOF
+XDG_SESSION_TYPE=x11
+XDG_CURRENT_DESKTOP=KDE
 EOF
 
 # Завершение
