@@ -189,14 +189,12 @@ rc-update add connmand
 rc-update add NetworkManager
 rc-update add elogind
 rc-update add sddm
-
 EOF
 
-artix-chroot /mnt cat > /etc/environment << EOF
-XDG_SESSION_TYPE=x11
-XDG_CURRENT_DESKTOP=KDE
-EOF
 
+
+
+rm -rf /mnt/pakege-*
 # Завершение
 echo "Установка завершена!"
 echo "Вы можете перезагрузить систему командой: reboot"
