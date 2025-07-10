@@ -82,7 +82,7 @@ echo "Монтирование разделов..."
 mount $PART_ROOT /mnt
 if [ $UEFI_MODE -eq 1 ]; then
     mkdir -p /mnt/boot/efi
-    mount $PART_BOOT /mnt/boartix-chroot /mntot/efi
+    mount $PART_BOOT /mnt/boartix-chroot /mnt/efi
 else
     mkdir -p /mnt/boot
     mount $PART_BOOT /mnt/boot
@@ -104,7 +104,7 @@ basestrap /mnt base base-devel openrc elogind-openrc \
 # Настройка fstab
 echo "Генерация fstab..."
 fstabgen -U /mnt >> /mnt/etc/fstab
-cp -r /etc/pacman.conf /mnt/etc/
+cp /etc/pacman.conf /mnt/etc/
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
@@ -125,6 +125,11 @@ echo "quasar" > /etc/hostname
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "::1 localhost" >> /etc/hosts
 echo "127.0.1.1 quasar.localdomain quasar" >> /etc/hosts
+echo 'NAME="Quasar Linux"
+PRETTY_NAME="Quasar Linux (artix base)"
+ID=quasar
+ID_LIKE=artix
+ANACONDA_ID="quasar"' > /etc/os-release
 
 # Пароль root
 echo "Установка пароля root:"
