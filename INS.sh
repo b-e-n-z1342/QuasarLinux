@@ -108,6 +108,8 @@ echo "Генерация fstab..."
 fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 
+cp pakege-amd pakege-intel /mnt/
+
 # Chroot-секция
 echo "Переход в chroot-окружение..."
 cat << EOF | artix-chroot /mnt /bin/bash
