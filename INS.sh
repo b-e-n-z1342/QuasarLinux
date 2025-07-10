@@ -101,6 +101,8 @@ basestrap /mnt base base-devel openrc elogind-openrc \
     sudo nano grub os-prober efibootmgr \
     dhcpcd connman-openrc
 
+read -p "Введите имя нового пользователя: " USERNAME
+
 # Настройка fstab
 echo "Генерация fstab..."
 fstabgen -U /mnt >> /mnt/etc/fstab
@@ -121,7 +123,7 @@ locale-gen
 echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
 # Сеть
-echo "quasar" > /etc/hostname
+echo "quasarlinux" > /etc/hostname
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "::1 localhost" >> /etc/hosts
 echo "127.0.1.1 quasar.localdomain quasar" >> /etc/hosts
@@ -131,15 +133,12 @@ ID=quasar
 ID_LIKE=artix
 ANACONDA_ID="quasar"' > /etc/os-release
 
-# Пароль root
-echo "Установка пароля root:"
-passwd
+echo "root:password" | chpasswd
 
 # Пользователь
-read -p "Введите имя нового пользователя: " username
-useradd -m -G wheel -s /bin/bash \$username
-echo "Установка пароля для пользователя \$username:"
-passwd \$username
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+echo "Установка пароля для пользователя "$USERNAME":"
+passwd "$USERNAME"
 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
