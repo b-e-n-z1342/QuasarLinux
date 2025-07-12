@@ -158,7 +158,7 @@ artix-chroot /mnt usermod -aG audio,video,input $USERNAME
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
-artix-chroot /mnt /bin/fish << EOF
+artix-chroot /mnt /bin/bash << EOF
 
 chmod 600 /etc/{shadow,gshadow}
 chown root:root /etc/{shadow,gshadow}
