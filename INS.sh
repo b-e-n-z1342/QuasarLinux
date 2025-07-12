@@ -10,12 +10,6 @@ echo "
 "
 echo "Установка Quasar Linux"
 
-# Проверка на root
-if [ "$(id -u)" != "0" ]; then
-    echo "Этот скрипт должен запускаться от root!"
-    exit 1
-fi
-
 # Проверка поддержки UEFI
 if [ -d /sys/firmware/efi/efivars ]; then
     echo "Обнаружен режим загрузки: UEFI"
@@ -44,62 +38,104 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Очистка диска
-echo "Очистка диска..."
-wipefs -a -f $DISK
-partprobe $DISK
-
-# Разметка диска
-if [ $UEFI_MODE -eq 1 ]; then
-    echo "Создание GPT разметки..."
-    parted -s $DISK mklabel gpt
-    parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
-    parted -s $DISK set 1 esp on
-    parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
-    PART_BOOT="${DISK}p1"
-    PART_ROOT="${DISK}p2"
+# --- ОПЦИЯ РУЧНОЙ РАЗМЕТКИ ---
+read -p "Ручная разметка (y) или авто (N)? " manual_part
+if [[ "$manual_part" =~ ^[Yy]$ ]]; then
+    echo "Запускаю cfdisk для ручной разметки $DISK..."
+    cfdisk $DISK
+    
+    echo "=== РАЗДЕЛЫ НА ДИСКЕ ==="
+    fdisk -l $DISK | grep "^/dev"
+    echo "======================="
+    
+    # Выбор раздела под корень /
+    read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
+    ROOT_PART="/dev/$ROOT_PART"
+    
+    if [ $UEFI_MODE -eq 1 ]; then
+        read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
+        BOOT_PART="/dev/$BOOT_PART"
+    else
+        read -p "Введите раздел для BOOT (например, sda1): " BOOT_PART
+        BOOT_PART="/dev/$BOOT_PART"
+    fi
+    
+    # Проверка разделов
+    [ ! -e "$ROOT_PART" ] && echo "Ошибка: $ROOT_PART не существует!" && exit 1
+    [ ! -e "$BOOT_PART" ] && echo "Ошибка: $BOOT_PART не существует!" && exit 1
+    
 else
-    echo "Создание MBR разметки..."
-    parted -s $DISK mklabel msdos
-    parted -s $DISK mkpart primary ext4 1MiB 513MiB
-    parted -s $DISK set 1 boot on
-    parted -s $DISK mkpart primary ext4 513MiB 100%
-    PART_BOOT="${DISK}1"
-    PART_ROOT="${DISK}2"
+    # --- АВТОМАТИЧЕСКАЯ РАЗМЕТКА ---
+    echo "Очистка диска..."
+    wipefs -a -f $DISK
+    partprobe $DISK
+
+    # Разметка диска
+    if [ $UEFI_MODE -eq 1 ]; then
+        echo "Создание GPT разметки..."
+        parted -s $DISK mklabel gpt
+        parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
+        parted -s $DISK set 1 esp on
+        parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
+        BOOT_PART="${DISK}p1"
+        ROOT_PART="${DISK}p2"
+    else
+        echo "Создание MBR разметки..."
+        parted -s $DISK mklabel msdos
+        parted -s $DISK mkpart primary ext4 1MiB 513MiB
+        parted -s $DISK set 1 boot on
+        parted -s $DISK mkpart primary ext4 513MiB 100%
+        BOOT_PART="${DISK}1"
+        ROOT_PART="${DISK}2"
+    fi
 fi
 
 # Форматирование разделов
 echo "Форматирование разделов..."
 if [ $UEFI_MODE -eq 1 ]; then
-    mkfs.fat -F32 $PART_BOOT
+    echo "Форматирование EFI: $BOOT_PART"
+    mkfs.fat -F32 $BOOT_PART
 else
-    mkfs.ext4 $PART_BOOT
+    echo "Форматирование BOOT: $BOOT_PART"
+    mkfs.ext4 -F $BOOT_PART
 fi
-mkfs.ext4 $PART_ROOT
+
+echo "Форматирование ROOT: $ROOT_PART"
+mkfs.ext4 -F $ROOT_PART
 
 # Монтирование
 echo "Монтирование разделов..."
-mount $PART_ROOT /mnt
+mount $ROOT_PART /mnt
+
 if [ $UEFI_MODE -eq 1 ]; then
     mkdir -p /mnt/boot/efi
-    mount $PART_BOOT /mnt/boartix-chroot /mnt/efi
+    mount $BOOT_PART /mnt/boot/efi
 else
     mkdir -p /mnt/boot
-    mount $PART_BOOT /mnt/boot
+    mount $BOOT_PART /mnt/boot
 fi
 
 # Проверка
 echo " "
-echo "Результат разметки:"
+echo "=== ФИНАЛЬНАЯ РАЗМЕТКА ==="
 lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
 echo " "
 
+# Дополнительные опции
+read -p "Форматировать SWAP раздел? (y/N): " make_swap
+if [[ "$make_swap" =~ ^[Yy]$ ]]; then
+    read -p "Введите раздел для SWAP (например, sda3): " SWAP_PART
+    SWAP_PART="/dev/$SWAP_PART"
+    mkswap $SWAP_PART
+    swapon $SWAP_PART
+    echo "SWAP активирован: $SWAP_PART"
+fi
+
+echo "Диск готов к установке! Продолжаем..."
+
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc \
-    linux-zen \
-    sudo nano grub os-prober efibootmgr \
-    dhcpcd connman-openrc
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd connman-openrc fish
 
 
 
@@ -110,23 +146,20 @@ cp /etc/pacman.conf /mnt/etc/
 
 cp pakege-amd pakege-intel /mnt/
 read -p "Введите имя нового пользователя: " USERNAME
+artix-chroot /mnt useradd -m -G wheel -s /bin/fish "$USERNAME"
 
 PASSWORD_HASH=$(openssl passwd -6 "quasar")
 
+artix-chroot /mnt passwd $USERNAME
+echo "давайте создадим пароль для root"
+artix-chroot /mnt passwd 
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
-artix-chroot /mnt /bin/bash << EOF
+artix-chroot /mnt /bin/fish << EOF
 
 chmod 600 /etc/{shadow,gshadow}
 chown root:root /etc/{shadow,gshadow}
-
-# Создание пользователя
-useradd -m -G wheel -s /bin/bash "$USERNAME"
-
-# Установка паролей
-usermod -p "$PASSWORD_HASH" root
-usermod -p "$PASSWORD_HASH" "$USERNAME"
 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
@@ -183,12 +216,12 @@ fi
 pacman -S --noconfirm $(cat pakege-list)
     
 # Сервисы
-rc-update add dbus
-rc-update add udev
-rc-update add connmand
-rc-update add NetworkManager
-rc-update add elogind
-rc-update add sddm
+rc-update add dbus boot
+rc-update add udev boot
+rc-update add connmand boot
+rc-update add NetworkManager defaut
+rc-update add elogind defaut
+rc-update add sddm defaut
 EOF
 
 
