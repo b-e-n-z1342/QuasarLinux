@@ -143,7 +143,8 @@ basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os
 echo "Генерация fstab..."
 fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
-
+cp systemctl /mnt/usr/local/bin
+chmod +x /mnt/usr/local/bin/systemctl
 cp pakege-amd pakege-intel /mnt/
 read -p "Введите имя нового пользователя: " USERNAME
 artix-chroot /mnt useradd -m -G wheel -s /bin/fish "$USERNAME"
@@ -153,6 +154,7 @@ PASSWORD_HASH=$(openssl passwd -6 "quasar")
 artix-chroot /mnt passwd $USERNAME
 echo "давайте создадим пароль для root"
 artix-chroot /mnt passwd 
+artix-chroot /mnt usermod -aG audio,video,input $USERNAME
 
 # Chroot-секция
 echo "Переход в chroot-окружение..."
@@ -213,9 +215,105 @@ else
 fi
 
 # Дополнительные пакеты
-pacman -S --noconfirm $(cat pakege-list)
+pacman -S --noconfirm $(cat pakege-list) pulseaudio pulseaudio-alsa seatd
+
+usermod -aG seat sddm
+mkdir -p /var/lib/sddm /var/run/sddm
+chown sddm:sddm /var/lib/sddm /var/run/sddm
+chmod 0755 /var/lib/sddm /var/run/sddm
+
+echo "export XDG_SESSION_TYPE=wayland" | sudo tee -a /etc/environment
+echo "export QT_QPA_PLATFORM=wayland" | sudo tee -a /etc/environment
+echo "export MOZ_ENABLE_WAYLAND=1" | sudo tee -a /etc/environment
+echo "[Wayland]" | sudo tee /etc/sddm.conf.d/wayland.conf
+echo "EnableHiDPI=true" | sudo tee -a /etc/sddm.conf.d/wayland.conf
+echo "SessionDir=/usr/share/wayland-sessions" | sudo tee -a /etc/sddm.conf.d/wayland.conf
+
+EOF
+
+artix-chroot /mnt tee /etc/init.d/pipewire-pulse << 'EOF'
+#!/sbin/openrc-run
+command="/usr/bin/pipewire-pulse"
+command_user="root"usermod -aG seat sddm
+pidfile="/run/pipewire-pulse.pid"
+depend() {
+    use pipewire
+}
+EOF
+artix-chroot /mnt tee /etc/init.d/sddm <<'EOF'
+#!/sbin/openrc-run
+
+name="SDDM Display Manager"
+description="Simple Desktop Display Manager"
+command="/usr/bin/sddm"
+command_args="--example-args"
+command_user="root"
+pidfile="/run/sddm.pid"
+
+depend() {
+    need dbus
+    need elogind
+    use udev
+    need seatd  
+    before alsa
+    keyword -shutdown
+}
+
+start_pre() {
+        if [ ! -f /etc/sddm.conf ]; then
+        ewarn "Конфиг /etc/sddm.conf не найден! Создаю базовый"
+        sddm --example-config > /etc/sddm.conf
+    fi
     
-# Сервисы
+
+    mkdir -p /var/run/sddm /var/lib/sddm
+    chown sddm:sddm /var/run/sddm /var/lib/sddm
+    chmod 0755 /var/run/sddm /var/lib/sddm
+}
+
+start_post() {
+    elog "SDDM запущен. Проверьте журнал: journalctl -u sddm"
+}
+
+stop_post() {
+    rm -f /var/run/sddm/* /tmp/runtime-sddm/*
+}
+EOF
+
+artix-chroot /mnt tee /etc/pam.d/sddm <<'EOF'
+auth        required    pam_env.so
+auth        required    pam_permit.so
+auth        required    pam_nologin.so
+account     required    pam_permit.so
+password    required    pam_deny.so
+session     required    pam_loginuid.so
+session     required    pam_env.so
+session     required    pam_limits.so
+session     required    pam_unix.so
+EOF
+
+artix-chroot /mnt tee /etc/init.d/pipewire << 'EOF'
+#!/sbin/openrc-run
+command="/usr/bin/pipewire"
+command_user="root"
+pidfile="/run/pipewire.pid"
+depend() {
+    need dbus
+    need alsasound
+}
+EOF
+artix-chroot /mnt tee /etc/security/limits.d/99-realtime.conf << 'EOF'
+@audio - rtprio 99
+@audio - memlock unlimited
+EOF
+
+
+artix-chroot /mnt /bin/fish << EOF
+
+chmod +x /etc/init.d/sddm
+chmod +x /etc/init.d/pipewire
+chmod +x /etc/init.d/pipewire-pulse
+
 rc-update add dbus boot
 rc-update add udev boot
 rc-update add elogind boot
