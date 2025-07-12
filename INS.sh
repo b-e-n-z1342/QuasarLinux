@@ -136,8 +136,8 @@ echo "Диск готов к установке! Продолжаем..."
 # Установка базовой системы
 echo "Установка базовой системы..."
 basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd connman-openrc fish
-
-
+rm -r /mnt/usr/share/
+cp -r pixmap /mnt/usr/share/
 
 # Настройка fstab
 echo "Генерация fstab..."
