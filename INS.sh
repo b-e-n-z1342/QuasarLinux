@@ -218,10 +218,14 @@ pacman -S --noconfirm $(cat pakege-list)
 # Сервисы
 rc-update add dbus boot
 rc-update add udev boot
-rc-update add connmand boot
+rc-update add elogind boot
 rc-update add NetworkManager defaut
-rc-update add elogind defaut
 rc-update add sddm defaut
+rc-update add acpid default
+rc-update add alsa default
+rc-update add seatd default
+rc-update add pipewire default
+rc-update add pipewire-pulse default
 EOF
 
 
