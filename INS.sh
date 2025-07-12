@@ -317,8 +317,8 @@ chmod +x /etc/init.d/pipewire-pulse
 rc-update add dbus boot
 rc-update add udev boot
 rc-update add elogind boot
-rc-update add NetworkManager defaut
-rc-update add sddm defaut
+rc-update add NetworkManager default
+rc-update add sddm default
 rc-update add acpid default
 rc-update add alsa default
 rc-update add seatd default
