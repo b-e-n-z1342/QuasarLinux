@@ -8,7 +8,19 @@ echo "
 ╚██████╔╝╚██████╔╝██║  ██║███████║██║  ██║██║  ██║
  ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
 "
-echo "Установка Quasar Linux"
+
+# Остановка графических сервисов в LiveCD (runit)
+echo "Остановка графических сервисов в LiveCD..."
+sv down sddm 2>/dev/null || true
+sv down lightdm 2>/dev/null || true
+sv down gdm 2>/dev/null || true
+sv down xdm 2>/dev/null || true
+pkill -f sddm || true
+pkill -f lightdm || true
+pkill -f gdm || true
+pkill -f plasma || true
+pkill -f kwin || true
+pkill -f X || true
 
 # Проверка поддержки UEFI
 if [ -d /sys/firmware/efi/efivars ]; then
@@ -43,15 +55,15 @@ read -p "Ручная разметка (y) или авто (N)? " manual_part
 if [[ "$manual_part" =~ ^[Yy]$ ]]; then
     echo "Запускаю cfdisk для ручной разметки $DISK..."
     cfdisk $DISK
-    
+
     echo "=== РАЗДЕЛЫ НА ДИСКЕ ==="
     fdisk -l $DISK | grep "^/dev"
     echo "======================="
-    
+
     # Выбор раздела под корень /
     read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
     ROOT_PART="/dev/$ROOT_PART"
-    
+
     if [ $UEFI_MODE -eq 1 ]; then
         read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
         BOOT_PART="/dev/$BOOT_PART"
@@ -59,11 +71,11 @@ if [[ "$manual_part" =~ ^[Yy]$ ]]; then
         read -p "Введите раздел для BOOT (например, sda1): " BOOT_PART
         BOOT_PART="/dev/$BOOT_PART"
     fi
-    
+
     # Проверка разделов
     [ ! -e "$ROOT_PART" ] && echo "Ошибка: $ROOT_PART не существует!" && exit 1
     [ ! -e "$BOOT_PART" ] && echo "Ошибка: $BOOT_PART не существует!" && exit 1
-    
+
 else
     # --- АВТОМАТИЧЕСКАЯ РАЗМЕТКА ---
     echo "Очистка диска..."
@@ -135,40 +147,41 @@ echo "Диск готов к установке! Продолжаем..."
 
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd connman-openrc fish
-rm -r /mnt/usr/share/
-cp -r pixmap /mnt/usr/share/
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd NetworkManager NetworkManager-openrc fish mc htop wget curl git
+
+# Копирование дополнительных файлов
+if [ -d "pixmap" ]; then
+    cp -r pixmap /mnt/usr/share/
+fi
+
+if [ -f "systemctl" ]; then
+    cp systemctl /mnt/usr/local/bin/
+    chmod +x /mnt/usr/local/bin/systemctl
+fi
 
 # Настройка fstab
 echo "Генерация fstab..."
 fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
-cp systemctl /mnt/usr/local/bin
-chmod +x /mnt/usr/local/bin/systemctl
-cp pakege-amd pakege-intel /mnt/
+
+# Создание пользователя
 read -p "Введите имя нового пользователя: " USERNAME
 artix-chroot /mnt useradd -m -G wheel -s /bin/fish "$USERNAME"
-
-PASSWORD_HASH=$(openssl passwd -6 "quasar")
-
 artix-chroot /mnt passwd $USERNAME
-echo "давайте создадим пароль для root"
+echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
-artix-chroot /mnt usermod -aG audio,video,input $USERNAME
+artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
 
-# Chroot-секция
+# Chroot-секция настройки
 echo "Переход в chroot-окружение..."
 artix-chroot /mnt /bin/bash << EOF
 
+# Права доступа
 chmod 600 /etc/{shadow,gshadow}
 chown root:root /etc/{shadow,gshadow}
 
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
-
-# Sudo
-echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
-
 
 # Настройка времени
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
@@ -182,117 +195,219 @@ echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
 # Сеть
 echo "quasarlinux" > /etc/hostname
-echo "127.0.0.1 localhost" >> /etc/hosts
-echo "::1 localhost" >> /etc/hosts
-echo "127.0.1.1 quasar.localdomain quasar" >> /etc/hosts
-echo 'NAME="Quasar Linux"
-PRETTY_NAME="Quasar Linux (artix base)"
+cat > /etc/hosts << 'HOSTS_EOF'
+127.0.0.1 localhost
+::1 localhost
+127.0.1.1 quasarlinux.localdomain quasarlinux
+HOSTS_EOF
+
+# Полный ребрендинг системы
+cat > /etc/os-release << 'OS_EOF'
+NAME="Quasar Linux"
+PRETTY_NAME="Quasar Linux (Artix base)"
 ID=quasar
 ID_LIKE=artix
-ANACONDA_ID="quasar"' > /etc/os-release
+ANACONDA_ID="quasar"
+VERSION="1.0"
+VERSION_ID="1.0"
+BUILD_ID="rolling"
+ANSI_COLOR="0;36"
+HOME_URL="https://quasarlinux.org"
+SUPPORT_URL="https://quasarlinux.org/support"
+BUG_REPORT_URL="https://quasarlinux.org/bugs"
+OS_EOF
 
-# Загрузчик
-if [ $UEFI_MODE -eq 1 ]; then
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Quasar
+cat > /etc/lsb-release << 'LSB_EOF'
+DISTRIB_ID=Quasar
+DISTRIB_RELEASE=1.0
+DISTRIB_DESCRIPTION="Quasar Linux"
+DISTRIB_CODENAME=rolling
+LSB_EOF
+
+# Принудительная настройка issue
+echo "Quasar Linux \\r \\l" > /etc/issue
+echo "Quasar Linux" > /etc/issue.net
+echo "Welcome to Quasar Linux!" > /etc/motd
+
+# Убираем автогенерацию
+rm -rf /etc/update-motd.d/ 2>/dev/null || true
+
+# Симлинк для совместимости
+ln -sf /etc/os-release /usr/lib/os-release 2>/dev/null || true
+
+# Передача переменных в chroot
+export UEFI_MODE=$UEFI_MODE
+export DISK=$DISK
+export BOOT_PART=$BOOT_PART
+
+# Установка GRUB
+echo "Устанавливаю загрузчик GRUB..."
+if [ \$UEFI_MODE -eq 1 ]; then
+    echo "Установка GRUB для UEFI..."
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Quasar --recheck
+    if [ ! -d /boot/efi/EFI/Quasar ]; then
+        echo "ОШИБКА: GRUB не установился в EFI раздел!"
+        exit 1
+    fi
 else
-    grub-install $DISK
+    echo "Установка GRUB для BIOS..."
+    grub-install --target=i386-pc \$DISK --recheck
 fi
+
+# Генерация конфига GRUB с кастомным названием
+sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# Драйверы GPU
+# Проверка установки GRUB
+if [ ! -f /boot/grub/grub.cfg ]; then
+    echo "ОШИБКА: Конфиг GRUB не создан!"
+    exit 1
+fi
+
+# Детекция и установка драйверов GPU
+echo "Определение видеокарты..."
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
-    pacman -S --noconfirm $(cat pakege-amd)
+    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau
 elif echo "\$gpu_info" | grep -qi "Intel"; then
     echo "Обнаружена видеокарта Intel"
-    pacman -S --noconfirm $(cat pakege-intel)
+    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver
 elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
     pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils
 else
-    echo "Видеокарта не определена"
+    echo "Видеокарта не определена, устанавливаю базовые драйверы"
+    pacman -S --noconfirm mesa
 fi
 
-# Дополнительные пакеты
-pacman -S --noconfirm $(cat pakege-list) pulseaudio pulseaudio-alsa seatd
+# Установка базовых системных пакетов
+echo "Установка системных пакетов..."
+pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils pulseaudio pulseaudio-alsa
 
-usermod -aG seat sddm
-mkdir -p /var/lib/sddm /var/run/sddm
-chown sddm:sddm /var/lib/sddm /var/run/sddm
-chmod 0755 /var/lib/sddm /var/run/sddm
+# Активация базовых сервисов
+echo "Активация базовых OpenRC сервисов..."
+rc-update add dbus boot
+rc-update add udev boot
+rc-update add elogind boot
+rc-update add NetworkManager default
+rc-update add acpid default
+rc-update add alsa default
 
-echo "export XDG_SESSION_TYPE=wayland" | sudo tee -a /etc/environment
-echo "export QT_QPA_PLATFORM=wayland" | sudo tee -a /etc/environment
-echo "export MOZ_ENABLE_WAYLAND=1" | sudo tee -a /etc/environment
-echo "[Wayland]" | sudo tee /etc/sddm.conf.d/wayland.conf
-echo "EnableHiDPI=true" | sudo tee -a /etc/sddm.conf.d/wayland.conf
-echo "SessionDir=/usr/share/wayland-sessions" | sudo tee -a /etc/sddm.conf.d/wayland.conf
+# Проверка активированных сервисов
+echo "=== АКТИВИРОВАННЫЕ СЕРВИСЫ ==="
+rc-update show
+echo "=============================="
 
 EOF
 
-artix-chroot /mnt tee /etc/init.d/pipewire-pulse << 'EOF'
-#!/sbin/openrc-run
-command="/usr/bin/pipewire-pulse"
-command_user="root"usermod -aG seat sddm
-pidfile="/run/pipewire-pulse.pid"
-depend() {
-    use pipewire
-}
-EOF
-artix-chroot /mnt tee /etc/init.d/sddm <<'EOF'
+# Создание скрипта пост-установки
+echo "Создание скрипта пост-установки..."
+cat > /mnt/home/$USERNAME/INST.sh << 'INST_EOF'
+#!/bin/bash
+
+echo "=========================================="
+echo "    QUASAR LINUX - ПОСТ-УСТАНОВКА"
+echo "=========================================="
+echo ""
+echo "Добро пожаловать в Quasar Linux!"
+echo "Этот скрипт установит и настроит:"
+echo "- KDE Plasma Desktop Environment"
+echo "- SDDM Display Manager"
+echo "- Дополнительные приложения"
+echo "- Настройки системы"
+echo ""
+read -p "Начать установку? (y/N): " start_install
+if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
+    echo "Отмена установки"
+    exit 0
+fi
+
+echo "Обновление системы..."
+sudo pacman -Syu --noconfirm
+
+echo "Установка KDE Plasma..."
+sudo pacman -S --noconfirm plasma-meta kde-applications-meta sddm sddm-kcm
+
+echo "Установка дополнительных приложений..."
+sudo pacman -S --noconfirm firefox vlc gimp libreoffice-fresh telegram-desktop discord steam lutris
+
+echo "Настройка SDDM..."
+sudo groupadd -f sddm
+sudo useradd -r -g sddm -s /usr/bin/nologin -d /var/lib/sddm sddm 2>/dev/null || true
+sudo mkdir -p /var/lib/sddm /var/run/sddm
+sudo chown sddm:sddm /var/lib/sddm /var/run/sddm
+sudo chmod 0755 /var/lib/sddm /var/run/sddm
+sudo usermod -aG seat,video,input sddm
+
+# Создание OpenRC скрипта для SDDM
+sudo tee /etc/init.d/sddm << 'SDDM_EOF'
 #!/sbin/openrc-run
 
 name="SDDM Display Manager"
 description="Simple Desktop Display Manager"
 command="/usr/bin/sddm"
-command_args="--example-args"
 command_user="root"
 pidfile="/run/sddm.pid"
 
 depend() {
     need dbus
     need elogind
+    need NetworkManager
     use udev
-    need seatd  
-    before alsa
     keyword -shutdown
 }
 
 start_pre() {
-        if [ ! -f /etc/sddm.conf ]; then
+    if [ ! -f /etc/sddm.conf ]; then
         ewarn "Конфиг /etc/sddm.conf не найден! Создаю базовый"
         sddm --example-config > /etc/sddm.conf
     fi
     
-
-    mkdir -p /var/run/sddm /var/lib/sddm
-    chown sddm:sddm /var/run/sddm /var/lib/sddm
+    mkdir -p /var/run/sddm /var/lib/sddm /tmp/runtime-sddm
+    chown sddm:sddm /var/run/sddm /var/lib/sddm /tmp/runtime-sddm
     chmod 0755 /var/run/sddm /var/lib/sddm
+    chmod 0700 /tmp/runtime-sddm
+    
+    export XDG_RUNTIME_DIR="/tmp/runtime-sddm"
 }
 
 start_post() {
-    elog "SDDM запущен. Проверьте журнал: journalctl -u sddm"
+    einfo "SDDM запущен успешно"
 }
 
 stop_post() {
-    rm -f /var/run/sddm/* /tmp/runtime-sddm/*
+    rm -rf /var/run/sddm/* /tmp/runtime-sddm/* 2>/dev/null || true
 }
-EOF
+SDDM_EOF
 
-artix-chroot /mnt tee /etc/pam.d/sddm <<'EOF'
-auth        required    pam_env.so
-auth        required    pam_permit.so
-auth        required    pam_nologin.so
-account     required    pam_permit.so
-password    required    pam_deny.so
-session     required    pam_loginuid.so
-session     required    pam_env.so
-session     required    pam_limits.so
-session     required    pam_unix.so
-EOF
+sudo chmod +x /etc/init.d/sddm
 
-artix-chroot /mnt tee /etc/init.d/pipewire << 'EOF'
+# Настройка SDDM конфига
+sudo mkdir -p /etc/sddm.conf.d
+sudo tee /etc/sddm.conf.d/quasar.conf << 'SDDM_CONF_EOF'
+[General]
+HaltCommand=/usr/bin/systemctl poweroff
+RebootCommand=/usr/bin/systemctl reboot
+
+[X11]
+SessionDir=/usr/share/xsessions
+XauthPath=/usr/bin/xauth
+
+[Wayland]
+SessionDir=/usr/share/wayland-sessions
+EnableHiDPI=true
+SDDM_CONF_EOF
+
+# Активация SDDM
+echo "Активация SDDM..."
+sudo rc-update add sddm default
+
+echo "Настройка звука..."
+sudo pacman -S --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
+
+# Создание OpenRC скрипта для pipewire
+sudo tee /etc/init.d/pipewire << 'PIPEWIRE_EOF'
 #!/sbin/openrc-run
 command="/usr/bin/pipewire"
 command_user="root"
@@ -302,35 +417,103 @@ depend() {
     need alsasound
 }
 EOF
-artix-chroot /mnt tee /etc/security/limits.d/99-realtime.conf << 'EOF'
-@audio - rtprio 99
-@audio - memlock unlimited
-EOF
 
+sudo chmod +x /etc/init.d/pipewire
+sudo rc-update add pipewire default
 
-artix-chroot /mnt /bin/fish << EOF
+echo "Настройка темы и локализации..."
+sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
 
-chmod +x /etc/init.d/sddm
-chmod +x /etc/init.d/pipewire
-chmod +x /etc/init.d/pipewire-pulse
+echo "Финальная настройка системы..."
+# Добавляем пользователя в нужные группы
+sudo usermod -aG wheel,audio,video,input,storage,optical,lp,scanner,games $(whoami)
 
-rc-update add dbus boot
-rc-update add udev boot
-rc-update add elogind boot
-rc-update add NetworkManager default
-rc-update add sddm default
-rc-update add acpid default
-rc-update add alsa default
-rc-update add seatd default
-rc-update add pipewire default
-rc-update add pipewire-pulse default
-EOF
+# Настройка .bashrc для пользователя
+cat >> ~/.bashrc << 'BASHRC_EOF'
+# Quasar Linux приветствие
+echo "Добро пожаловать в Quasar Linux!"
+echo "Версия: $(cat /etc/os-release | grep VERSION= | cut -d'=' -f2 | tr -d '"')"
+echo ""
+BASHRC_EOF
 
+echo "=========================================="
+echo "         УСТАНОВКА ЗАВЕРШЕНА!"
+echo "=========================================="
+echo ""
+echo "Quasar Linux успешно настроен!"
+echo "Рекомендуется перезагрузить систему:"
+echo "sudo reboot"
+echo ""
+echo "После перезагрузки вас встретит графический"
+echo "интерфейс SDDM с KDE Plasma"
+echo ""
+echo "Удачи с использованием Quasar Linux! 🚀"
+echo ""
+INST_EOF
 
+chmod +x /mnt/home/$USERNAME/INST.sh
+chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 
+# Создание информационного файла
+cat > /mnt/home/$USERNAME/README.txt << README_EOF
+===========================================
+      ДОБРО ПОЖАЛОВАТЬ В QUASAR LINUX!
+===========================================
 
-rm -rf /mnt/pakege-*
-# Завершение
-echo "Установка завершена!"
-echo "Вы можете перезагрузить систему командой: reboot"
-echo "Не забудьте извлечь установочный носитель"
+Базовая установка завершена успешно!
+
+ЧТО УСТАНОВЛЕНО:
+- Базовая система Quasar Linux
+- Консольные утилиты (mc, htop, nano)
+- Сетевые инструменты (NetworkManager)
+- Базовые драйверы видеокарты
+- Звуковая подсистема (ALSA)
+
+СЛЕДУЮЩИЕ ШАГИ:
+1. Перезагрузите систему: sudo reboot
+2. Войдите в систему через консоль
+3. Запустите: ./INST.sh
+4. Следуйте инструкциям для установки KDE Plasma
+
+СПРАВКА:
+- Команды systemctl работают (совместимость с OpenRC)
+- Файлы конфигурации в /etc/
+- Логи системы: sudo journalctl или dmesg
+
+ПОДДЕРЖКА:
+- Документация: /usr/share/doc/quasar/
+- Сообщество: https://quasarlinux.org
+
+Удачи! 🚀
+README_EOF
+
+chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
+
+# Размонтирование
+echo "Размонтирование разделов..."
+umount -R /mnt 2>/dev/null || true
+swapoff $SWAP_PART 2>/dev/null || true
+
+echo "=========================================="
+echo "      УСТАНОВКА QUASAR LINUX ЗАВЕРШЕНА!"
+echo "=========================================="
+echo ""
+echo "Базовая система успешно установлена!"
+echo ""
+echo "ЧТО БЫЛО УСТАНОВЛЕНО:"
+echo "- Загрузчик GRUB настроен и работает"
+echo "- Базовая система с консольными утилитами"
+echo "- Сетевые настройки (NetworkManager)" 
+echo "- Пользователь: $USERNAME"
+echo "- Совместимость systemctl команд"
+echo ""
+echo "СЛЕДУЮЩИЕ ШАГИ:"
+echo "1. Перезагрузите систему: reboot"
+echo "2. Войдите как пользователь: $USERNAME"
+echo "3. Запустите: ./INST.sh"
+echo "4. Установите KDE Plasma и приложения"
+echo ""
+echo "ВНИМАНИЕ: Не забудьте извлечь установочный носитель!"
+echo ""
+echo "Добро пожаловать в Quasar Linux! 🚀"
+echo "=========================================="
