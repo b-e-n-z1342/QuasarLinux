@@ -133,7 +133,7 @@ echo "Диск готов к установке! Продолжаем..."
 
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd NetworkManager NetworkManager-openrc fish mc htop wget curl git
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git
 
 # Копирование дополнительных файлов
 if [ -d "pixmap" ]; then
