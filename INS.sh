@@ -8,20 +8,6 @@ echo "
 ╚██████╔╝╚██████╔╝██║  ██║███████║██║  ██║██║  ██║
  ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
 "
-
-# Остановка графических сервисов в LiveCD (runit)
-echo "Остановка графических сервисов в LiveCD..."
-sv down sddm 2>/dev/null || true
-sv down lightdm 2>/dev/null || true
-sv down gdm 2>/dev/null || true
-sv down xdm 2>/dev/null || true
-pkill -f sddm || true
-pkill -f lightdm || true
-pkill -f gdm || true
-pkill -f plasma || true
-pkill -f kwin || true
-pkill -f X || true
-
 # Проверка поддержки UEFI
 if [ -d /sys/firmware/efi/efivars ]; then
     echo "Обнаружен режим загрузки: UEFI"
@@ -166,7 +152,7 @@ cp /etc/pacman.conf /mnt/etc/
 
 # Создание пользователя
 read -p "Введите имя нового пользователя: " USERNAME
-artix-chroot /mnt useradd -m -G wheel -s /bin/fish "$USERNAME"
+artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
 artix-chroot /mnt passwd $USERNAME
 echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
@@ -283,7 +269,7 @@ fi
 
 # Установка базовых системных пакетов
 echo "Установка системных пакетов..."
-pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils pulseaudio pulseaudio-alsa
+pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils pulseaudio pulseaudio-alsa 
 
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
@@ -303,7 +289,7 @@ EOF
 
 # Создание скрипта пост-установки
 echo "Создание скрипта пост-установки..."
-cat > /mnt/home/$USERNAME/INST.sh << 'INST_EOF'
+cat > /mnt/root/INST.sh << 'INST_EOF'
 #!/bin/bash
 
 echo "=========================================="
@@ -316,7 +302,6 @@ echo "- KDE Plasma Desktop Environment"
 echo "- SDDM Display Manager"
 echo "- Дополнительные приложения"
 echo "- Настройки системы"
-echo ""
 read -p "Начать установку? (y/N): " start_install
 if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     echo "Отмена установки"
