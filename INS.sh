@@ -253,7 +253,7 @@ export BOOT_PART=$BOOT_PART
 echo "Устанавливаю загрузчик GRUB..."
 if [ \$UEFI_MODE -eq 1 ]; then
     echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Quasar --recheck
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
     if [ ! -d /boot/efi/EFI/Quasar ]; then
         echo "ОШИБКА: GRUB не установился в EFI раздел!"
         exit 1
