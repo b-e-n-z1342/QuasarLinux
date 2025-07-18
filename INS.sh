@@ -8,16 +8,12 @@ echo "
 ╚██████╔╝╚██████╔╝██║  ██║███████║██║  ██║██║  ██║
  ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
 "
-# Проверка поддержки UEFI
-if [ -d /sys/firmware/efi/efivars ]; then
-    echo "Обнаружен режим загрузки: UEFI"
-    UEFI_MODE=1
-else
-    echo "Обнаружен режим загрузки: BIOS"
-    UEFI_MODE=0
-fi
 
-# Выбор диска
+
+# Определение режима загрузки (UEFI/BIOS)
+UEFI_MODE=0
+[ -d /sys/firmware/efi ] && UEFI_MODE=1
+
 echo "Доступные диски:"
 lsblk -d -o NAME,SIZE,MODEL,TYPE
 read -p "Введите имя диска (например, sda/nvme0n1): " DISK
@@ -29,108 +25,135 @@ if [ ! -e "$DISK" ]; then
     exit 1
 fi
 
-# Подтверждение
-read -p "ВСЕ ДАННЫЕ НА $DISK БУДУТ УДАЛЕНЫ! Продолжить? (y/N): " confirm
-if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    echo "Отмена"
-    exit 0
-fi
-
-# --- ОПЦИЯ РУЧНОЙ РАЗМЕТКИ ---
-read -p "Ручная разметка (y) или авто (N)? " manual_part
-if [[ "$manual_part" =~ ^[Yy]$ ]]; then
-    echo "Запускаю cfdisk для ручной разметки $DISK..."
-    cfdisk $DISK
-
-    echo "=== РАЗДЕЛЫ НА ДИСКЕ ==="
-    fdisk -l $DISK | grep "^/dev"
-    echo "======================="
-
-    # Выбор раздела под корень /
-    read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
-    ROOT_PART="/dev/$ROOT_PART"
-
-    if [ $UEFI_MODE -eq 1 ]; then
-        read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
-        BOOT_PART="/dev/$BOOT_PART"
-    else
-        read -p "Введите раздел для BOOT (например, sda1): " BOOT_PART
-        BOOT_PART="/dev/$BOOT_PART"
+# Проверка готовности диска
+read -p "Диск уже подготовлен (разделы созданы и смонтированы)? [y/N]: " PREPARED
+if [[ "$PREPARED" =~ ^[Yy]$ ]]; then
+    echo "Пропускаем разметку и монтирование..."
+    
+    # Проверка корректности монтирования
+    if ! mount | grep -q '/mnt '; then
+        echo "Ошибка: корневая файловая система не смонтирована в /mnt!"
+        exit 1
+    fi
+    
+    if [ $UEFI_MODE -eq 1 ] && ! mount | grep -q '/mnt/boot/efi'; then
+        echo "Ошибка: EFI раздел не смонтирован в /mnt/boot/efi!"
+        exit 1
+    fi
+    
+    echo "Текущая разметка:"
+    lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
+else
+    # Подтверждение операции
+    read -p "ВСЕ ДАННЫЕ НА $DISK БУДУТ УДАЛЕНЫ! Продолжить? [y/N]: " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Отмена"
+        exit 0
     fi
 
-    # Проверка разделов
-    [ ! -e "$ROOT_PART" ] && echo "Ошибка: $ROOT_PART не существует!" && exit 1
-    [ ! -e "$BOOT_PART" ] && echo "Ошибка: $BOOT_PART не существует!" && exit 1
+    # --- РУЧНАЯ ИЛИ АВТОМАТИЧЕСКАЯ РАЗМЕТКА ---
+    read -p "Ручная разметка (y) или авто (N)? " manual_part
+    if [[ "$manual_part" =~ ^[Yy]$ ]]; then
+        echo "Запускаю cfdisk для ручной разметки $DISK..."
+        cfdisk $DISK
 
-else
-    # --- АВТОМАТИЧЕСКАЯ РАЗМЕТКА ---
-    echo "Очистка диска..."
-    wipefs -a -f $DISK
-    partprobe $DISK
+        echo "=== РАЗДЕЛЫ НА ДИСКЕ ==="
+        fdisk -l $DISK | grep "^/dev"
+        echo "======================="
 
-    # Разметка диска
-    if [ $UEFI_MODE -eq 1 ]; then
-        echo "Создание GPT разметки..."
-        parted -s $DISK mklabel gpt
-        parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
-        parted -s $DISK set 1 esp on
-        parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
-        BOOT_PART="${DISK}p1"
-        ROOT_PART="${DISK}p2"
+        # Выбор раздела под корень /
+        read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
+        ROOT_PART="/dev/$ROOT_PART"
+
+        if [ $UEFI_MODE -eq 1 ]; then
+            read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
+            BOOT_PART="/dev/$BOOT_PART"
+        else
+            read -p "Введите раздел для BOOT (например, sda1): " BOOT_PART
+            BOOT_PART="/dev/$BOOT_PART"
+        fi
+
+        # Проверка разделов
+        [ ! -e "$ROOT_PART" ] && echo "Ошибка: $ROOT_PART не существует!" && exit 1
+        [ ! -e "$BOOT_PART" ] && echo "Ошибка: $BOOT_PART не существует!" && exit 1
     else
-        echo "Создание MBR разметки..."
-        parted -s $DISK mklabel msdos
-        parted -s $DISK mkpart primary ext4 1MiB 513MiB
-        parted -s $DISK set 1 boot on
-        parted -s $DISK mkpart primary ext4 513MiB 100%
-        BOOT_PART="${DISK}1"
-        ROOT_PART="${DISK}2"
+        # --- АВТОМАТИЧЕСКАЯ РАЗМЕТКА ---
+        echo "Очистка диска..."
+        wipefs -a -f $DISK
+        partprobe $DISK
+
+        # Разметка диска
+        if [ $UEFI_MODE -eq 1 ]; then
+            echo "Создание GPT разметки..."
+            parted -s $DISK mklabel gpt
+            parted -s $DISK mkpart "EFI" fat32 1MiB 513MiB
+            parted -s $DISK set 1 esp on
+            parted -s $DISK mkpart "ROOT" ext4 513MiB 100%
+            BOOT_PART="${DISK}p1"
+            ROOT_PART="${DISK}p2"
+        else
+            echo "Создание MBR разметки..."
+            parted -s $DISK mklabel msdos
+            parted -s $DISK mkpart primary ext4 1MiB 513MiB
+            parted -s $DISK set 1 boot on
+            parted -s $DISK mkpart primary ext4 513MiB 100%
+            BOOT_PART="${DISK}1"
+            ROOT_PART="${DISK}2"
+        fi
     fi
+
+    # Форматирование разделов
+    echo "Форматирование разделов..."
+    if [ $UEFI_MODE -eq 1 ]; then
+        echo "Форматирование EFI: $BOOT_PART"
+        mkfs.fat -F32 $BOOT_PART
+    else
+        echo "Форматирование BOOT: $BOOT_PART"
+        mkfs.ext4 -F $BOOT_PART
+    fi
+
+    echo "Форматирование ROOT: $ROOT_PART"
+    mkfs.ext4 -F $ROOT_PART
+
+    # Монтирование
+    echo "Монтирование разделов..."
+    mount $ROOT_PART /mnt
+
+    if [ $UEFI_MODE -eq 1 ]; then
+        mkdir -p /mnt/boot/efi
+        mount $BOOT_PART /mnt/boot/efi
+    else
+        mkdir -p /mnt/boot
+        mount $BOOT_PART /mnt/boot
+    fi
+
+    # Проверка монтирования
+    echo " "
+    echo "=== ФИНАЛЬНАЯ РАЗМЕТКА ==="
+    lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
+    echo " "
 fi
 
-# Форматирование разделов
-echo "Форматирование разделов..."
-if [ $UEFI_MODE -eq 1 ]; then
-    echo "Форматирование EFI: $BOOT_PART"
-    mkfs.fat -F32 $BOOT_PART
-else
-    echo "Форматирование BOOT: $BOOT_PART"
-    mkfs.ext4 -F $BOOT_PART
-fi
+# --- ОБЩИЕ ОПЕРАЦИИ (ВЫПОЛНЯЮТСЯ ВСЕГДА) ---
 
-echo "Форматирование ROOT: $ROOT_PART"
-mkfs.ext4 -F $ROOT_PART
-
-# Монтирование
-echo "Монтирование разделов..."
-mount $ROOT_PART /mnt
-
-if [ $UEFI_MODE -eq 1 ]; then
-    mkdir -p /mnt/boot/efi
-    mount $BOOT_PART /mnt/boot/efi
-else
-    mkdir -p /mnt/boot
-    mount $BOOT_PART /mnt/boot
-fi
-
-# Проверка
-echo " "
-echo "=== ФИНАЛЬНАЯ РАЗМЕТКА ==="
-lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
-echo " "
-
-# Дополнительные опции
-read -p "Форматировать SWAP раздел? (y/N): " make_swap
+# Работа со SWAP
+read -p "Активировать SWAP раздел? [y/N]: " make_swap
 if [[ "$make_swap" =~ ^[Yy]$ ]]; then
     read -p "Введите раздел для SWAP (например, sda3): " SWAP_PART
     SWAP_PART="/dev/$SWAP_PART"
-    mkswap $SWAP_PART
-    swapon $SWAP_PART
-    echo "SWAP активирован: $SWAP_PART"
+    
+    if [ ! -e "$SWAP_PART" ]; then
+        echo "Ошибка: раздел $SWAP_PART не существует!"
+    else
+        mkswap $SWAP_PART
+        swapon $SWAP_PART
+        echo "SWAP активирован: $SWAP_PART"
+    fi
 fi
 
-echo "Диск готов к установке! Продолжаем..."
-
+# Дальнейшие шаги установки...
+echo "Продолжаем установку системы..."
+# pacstrap /mnt base linux linux-firmware ...
 # Установка базовой системы
 echo "Установка базовой системы..."
 basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git
