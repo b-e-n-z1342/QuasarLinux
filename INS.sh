@@ -331,9 +331,6 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-read -p "Введите имя нового пользователя: " USERNAME
-useradd -m -G wheel -s /bin/bash "$USERNAME"
-passwd $USERNAME
 
 
 echo "установка Plasma"
