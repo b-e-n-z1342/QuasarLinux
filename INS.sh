@@ -331,14 +331,18 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-echo "Обновление системы..."
-sudo pacman -Syu --noconfirm
+read -p "Введите имя нового пользователя: " USERNAME
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+passwd $USERNAME
 
-echo "Установка KDE Plasma..."
-sudo pacman -S --noconfirm plasma sddm sddm-openrc
 
-echo "Установка дополнительных приложений..."
-sudo pacman -S --noconfirm
+echo "установка Plasma"
+sudo pacman -Syy
+
+
+sudo pacman -S --noconfirm plasma sddm sddm-openrc dolphin qt6 wine-staging winetricks kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc
+
+
 
 echo "Настройка SDDM..."
 sudo groupadd -f sddm
