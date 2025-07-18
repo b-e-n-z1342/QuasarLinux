@@ -335,10 +335,10 @@ echo "Обновление системы..."
 sudo pacman -Syu --noconfirm
 
 echo "Установка KDE Plasma..."
-sudo pacman -S --noconfirm plasma-meta kde-applications-meta sddm sddm-kcm
+sudo pacman -S --noconfirm plasma sddm sddm-openrc
 
 echo "Установка дополнительных приложений..."
-sudo pacman -S --noconfirm firefox vlc gimp libreoffice-fresh telegram-desktop discord steam lutris
+sudo pacman -S --noconfirm
 
 echo "Настройка SDDM..."
 sudo groupadd -f sddm
