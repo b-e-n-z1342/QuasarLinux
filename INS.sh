@@ -311,11 +311,11 @@ echo "=============================="
 EOF
 
 
-cp INST.sh /root/
-cp INST.sh /home/$USERNAME/
+cp INST.sh /mnt/root/
+cp INST.sh /mnt/home/$USERNAME/
 
 
-
+chmod +x /mnt/root/INST.sh
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 
