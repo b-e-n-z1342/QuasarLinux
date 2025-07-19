@@ -3,7 +3,7 @@
 #systemctl enable
 enable_service() {
     local service_name="$1"
-     add "$service_name" default
+    rc-update add "$service_name" default
 }
 
 #systemctl disable
@@ -26,7 +26,7 @@ stop_service() {
 
 #systemctl restart
 restart_service() {
-    local service_name="$1"
+    local service_namecp INST.sh /root="$1"
     rc-service "$service_name" restart
 }
 
