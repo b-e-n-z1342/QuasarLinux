@@ -221,9 +221,8 @@ VERSION="1.0"
 VERSION_ID="1.0"
 BUILD_ID="rolling"
 ANSI_COLOR="0;36"
-HOME_URL="https://quasarlinux.org"
-SUPPORT_URL="https://quasarlinux.org/support"
-BUG_REPORT_URL="https://quasarlinux.org/bugs"
+HOME_URL="https://b-e-n-z1342.github.io"
+LOGO=quasar-logo
 OS_EOF
 
 cat > /etc/lsb-release << 'LSB_EOF'
@@ -278,13 +277,13 @@ echo "Определение видеокарты..."
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
-    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau
+    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau linux-firmware-amdgpu
 elif echo "\$gpu_info" | grep -qi "Intel"; then
     echo "Обнаружена видеокарта Intel"
-    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver
+    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver linux-firmware-intel
 elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
-    pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils
+    pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils linux-firmware-nvidia
 else
     echo "Видеокарта не определена, устанавливаю базовые драйверы"
     pacman -S --noconfirm mesa
