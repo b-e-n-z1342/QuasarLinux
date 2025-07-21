@@ -99,7 +99,8 @@ echo "Активация SDDM..."
 sudo rc-update add sddm default
 
 echo "Настройка звука..."
-sudo pacman -S --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
+sudo pacman -Rn jack2
+sudo pacman -S --noconfirm pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 
 # Создание OpenRC скрипта для pipewire
 sudo tee /etc/init.d/pipewire << 'PIPEWIRE_EOF'
