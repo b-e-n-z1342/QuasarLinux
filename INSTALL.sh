@@ -1,4 +1,13 @@
 #!/bin/bash
+setfont ter-132n < /dev/console
+setfont ter-132n < /dev/tty1
+setfont ter-132n < /dev/tty2
+setfont ter-132n < /dev/tty3
+setfont ter-132n < /dev/tty4
+setfont ter-132n < /dev/tty5
+setfont ter-132n < /dev/tty6
+
+
 read -p "у вас WIFI ?  (y/N): " iwifi
 if [[ ! "$iwifi" =~ ^[Yy]$ ]]; then 
 	echo "ok"
