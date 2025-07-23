@@ -1,11 +1,11 @@
 #!/bin/bash
-setfont ter-132n < /dev/console
-setfont ter-132n < /dev/tty1
-setfont ter-132n < /dev/tty2
-setfont ter-132n < /dev/tty3
-setfont ter-132n < /dev/tty4
-setfont ter-132n < /dev/tty5
-setfont ter-132n < /dev/tty6
+setfont ter-v16n < /dev/console
+setfont ter-v16n < /dev/tty1
+setfont ter-v16n < /dev/tty2
+setfont ter-v16n < /dev/tty3
+setfont ter-v16n < /dev/tty4
+setfont ter-v16n < /dev/tty5
+setfont ter-v16n < /dev/tty6
 
 
 read -p "у вас WIFI ?  (y/N): " iwifi
