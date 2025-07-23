@@ -308,7 +308,8 @@ rc-update show
 echo "=============================="
 
 EOF
-
+cp INSTALL.sh /mnt/root/
+cp INSTALL.sh /mnt/home/$USERNAME/
 
 cp INST.sh /mnt/root/
 cp INST.sh /mnt/home/$USERNAME/
@@ -374,7 +375,7 @@ echo ""
 echo "СЛЕДУЮЩИЕ ШАГИ:"
 echo "1. Перезагрузите систему: reboot"
 echo "2. Войдите как пользователь: $USERNAME"
-echo "3. Запустите: ./INST.sh"
+echo "3. Запустите: ./INSTALL.sh"
 echo "4. Установите KDE Plasma и приложения"
 echo ""
 echo "ВНИМАНИЕ: Не забудьте извлечь установочный носитель!"
