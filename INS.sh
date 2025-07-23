@@ -319,6 +319,10 @@ chmod +x /mnt/root/INST.sh
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 
+
+echo "FOUT=ter-v16n" >> /mnt/etc/vconsole.conf
+
+
 # Создание информационного файла
 cat > /mnt/home/$USERNAME/README.txt << README_EOF
 ===========================================
