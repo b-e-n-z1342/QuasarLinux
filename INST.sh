@@ -21,9 +21,20 @@ echo "установка Plasma"
 sudo pacman -Syy
 
 
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc flapak 
-wineboot --init
-WINEDLLOVERRIDES="mscoree,mshtml=" WINEARCH=win64 winetricks dxvk vkd3d corefonts vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet40 dotnet45 dotnet462 dotnet48 physx openal win10  --force -q --unattended
+sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc flatpak 
+
+sleep 5
+
+winecfg
+
+sleep 2
+
+export WINEDLLOVERRIDES="mscoree,mshtml=" 
+export WINEPREFIX=/home/.wine
+export WINEARCH=win64 
+winetricks dxvk vkd3d corefonts vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet40 dotnet45 dotnet462 dotnet48 physx openal win10  --force -q --unattended
+
+
 #WINEDLLOVERRIDES="mscoree,mshtml=" WINEARCH=win64 winetricks --unattended --force -q corefonts tahoma cjkfonts vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022  dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
 
 #WINEDLLOVERRIDES="mscoree,mshtml=" WINEARCH=win64 winetricks --unattended --force -q mono gecko corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10 >/dev/null 2>&1
@@ -33,7 +44,7 @@ git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
 
-yay -S waydroid 
+yay -S waydroid --noconfirm
 
 
 echo "Настройка SDDM..."
@@ -110,7 +121,10 @@ echo "Активация SDDM..."
 sudo rc-update add sddm default
 
 echo "Настройка звука..."
-sudo pacman -Rn jack2
+sudo pacman -Rns jack2 puleeaudio
+
+sleep 5
+
 sudo pacman -S --noconfirm pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 
 # Создание OpenRC скрипта для pipewire
