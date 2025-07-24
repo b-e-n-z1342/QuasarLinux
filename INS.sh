@@ -318,7 +318,8 @@ cp INST.sh /mnt/home/$USERNAME/
 chmod +x /mnt/root/INST.sh
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
-
+cp INSTALL.sh /mnt/$USERNAME/
+chmod +x /mnt/$USERNAME/INSTALL.sh
 
 echo "FOUT=ter-v16n" >> /mnt/etc/vconsole.conf
 
@@ -355,7 +356,26 @@ cat > /mnt/home/$USERNAME/README.txt << README_EOF
 
 Удачи! 🚀
 README_EOF
+cat /mnt/home/$USERNAME/.profile << EOF
+if  [ ! -f ~/.install_done ]; then
+    ~./INSTALL.sh
+    touch ~/.install_done
+fi
+EOF
 
+cat /mnt/home/$USERNAME/.bash_profile << EOF
+if  [ ! -f ~/.install_done ]; then
+    ~./INSTALL.sh
+    touch ~/.install_done
+fi
+EOF
+
+cat /mnt/home/$USERNAME/.xprofile << EOF
+if  [ ! -f ~/.install_done ]; then
+    ~./INSTALL.sh
+    touch ~/.install_done
+fi
+EOF
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
 
