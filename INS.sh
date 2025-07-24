@@ -358,6 +358,17 @@ README_EOF
 
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
+
+cat  /mnt/etc/initcpio/hooks/brand-qus << EOF
+run_hook() {
+    echo "Welcom in QuasarLinux-BETA"
+EOF
+
+grep -q '\brand-qus\b' /mnt/etc/mkinitcpio.conf || \
+echo 'HOOKS+=(brand-qus)' | tee -a /mnt/etc/mkinitcpio.conf
+
+artix-chroot /mnt mkinitcpio -P
+
 # Размонтирование
 echo "Размонтирование разделов..."
 umount -R /mnt 2>/dev/null || true
