@@ -379,7 +379,7 @@ EOF
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
 
-cat  /mnt/etc/initcpio/hooks/brand-qus << EOF
+cat << 'EOF' > /mnt/etc/initcpio/hooks/brand-qus 
 run_hook() {
     echo "Welcom in QuasarLinux-BETA"
 EOF
