@@ -1,4 +1,4 @@
-# QuasarLinux
+# QuasarLinux-installer
 
 QuasarLinux -- это дистребудив основанный на artix с openrc и linux-zen, оринтирован на универсальность.
 
