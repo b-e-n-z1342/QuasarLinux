@@ -121,7 +121,8 @@ echo "Активация SDDM..."
 sudo rc-update add sddm default
 
 echo "Настройка звука..."
-sudo pacman -Rns jack2 puleeaudio
+sudo pacman -R --noconfirm jack2 pulseaudio pulseaudio-alsa
+sudo pacman -Rns jack2
 
 sleep 5
 
@@ -157,7 +158,7 @@ echo "Версия: $(cat /etc/os-release | grep VERSION= | cut -d'=' -f2 | tr -
 echo ""
 BASHRC_EOF
 
-sudo rc-update add saetd default
+sudo rc-update add seatd default
 sudo rc-update add elogind defailt
 sudo rc-update add pipewire-pulse default
 
