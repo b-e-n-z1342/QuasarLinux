@@ -21,8 +21,16 @@ echo "установка Plasma"
 sudo pacman -Syy
 
 
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc flatpak 
+sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc flatpak 
+sleep 5
+sudo rc-update add seatd default
+sudo rc-service seatd start
+eval $(dbus-launch --sh-syntax)
+dbus-launch --sh-syntax
+exec startplasma-wayland
 
+
+konsole --hold -e bash -c "echo 'Продолжение установки...' && 
 sleep 5
 
 winecfg
@@ -121,8 +129,7 @@ echo "Активация SDDM..."
 sudo rc-update add sddm default
 
 echo "Настройка звука..."
-sudo pacman -R --noconfirm jack2 pulseaudio pulseaudio-alsa
-sudo pacman -Rns jack2
+sudo pacman -R --noconfirm jack2 
 
 sleep 5
 
@@ -158,7 +165,7 @@ echo "Версия: $(cat /etc/os-release | grep VERSION= | cut -d'=' -f2 | tr -
 echo ""
 BASHRC_EOF
 
-sudo rc-update add seatd default
+
 sudo rc-update add elogind defailt
 sudo rc-update add pipewire-pulse default
 
@@ -181,5 +188,8 @@ sudo chmod +x /etc/local.d/fixing.start
 
 sudo rc-update add local default
 
+
+echo 'Все готово!' && 
+read -p 'Нажмите Enter для выхода'"
 
 
