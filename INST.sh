@@ -25,12 +25,14 @@ sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-sta
 sleep 5
 sudo rc-update add seatd default
 sudo rc-service seatd start
-eval $(dbus-launch --sh-syntax)
-dbus-launch --sh-syntax
-exec startplasma-wayland
+
+cat >> /.bash_profile << 'EOF'
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+    eval $(dbus-launch --sh-syntax)
+fi
+EOF
 
 
-konsole --hold -e bash -c "echo 'Продолжение установки...' && 
 sleep 5
 
 wineboot --init
@@ -169,7 +171,7 @@ sudo rc-update add pipewire-pulse default
 
 
 
-cat /etc/local.d/fixing.start << 'EOF'
+cat >> /etc/local.d/fixing.start << 'EOF'
 #!/bin/bash
 if [ -z "DBUS_SESSION_BUS_ADDRESS" ]; then
     eval "$(dbus-launch --sh-syntax)"
@@ -186,8 +188,5 @@ sudo chmod +x /etc/local.d/fixing.start
 
 sudo rc-update add local default
 
-
-echo 'Все готово!' && 
-read -p 'Нажмите Enter для выхода'"
 
 
