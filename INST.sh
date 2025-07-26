@@ -33,13 +33,11 @@ exec startplasma-wayland
 konsole --hold -e bash -c "echo 'Продолжение установки...' && 
 sleep 5
 
-winecfg
+wineboot --init
 
 sleep 2
 
-export WINEDLLOVERRIDES="mscoree,mshtml=" 
-export WINEPREFIX=/home/.wine
-export WINEARCH=win64 
+
 winetricks dxvk vkd3d corefonts vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet40 dotnet45 dotnet462 dotnet48 physx openal win10  --force -q --unattended
 
 
