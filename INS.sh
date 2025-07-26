@@ -253,7 +253,7 @@ echo "Устанавливаю загрузчик GRUB..."
 if [ \$UEFI_MODE -eq 1 ]; then
     echo "Установка GRUB для UEFI..."
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-    if [ ! -d /boot/efi/EFI/Quasar ]; then
+    if [ ! -d /boot/efi/EFI/GRUB ]; then
         echo "ОШИБКА: GRUB не установился в EFI раздел!"
         exit 1
     fi
@@ -318,8 +318,8 @@ cp INST.sh /mnt/home/$USERNAME/
 chmod +x /mnt/root/INST.sh
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
-cp INSTALL.sh /mnt/$USERNAME/
-chmod +x /mnt/$USERNAME/INSTALL.sh
+cp INSTALL.sh /mnt/home/$USERNAME/
+chmod +x /mnt/home/$USERNAME/INSTALL.sh
 
 echo "FOUT=ter-v16n" >> /mnt/etc/vconsole.conf
 
@@ -382,6 +382,7 @@ chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 cat << 'EOF' > /mnt/etc/initcpio/hooks/brand-qus 
 run_hook() {
     echo "Welcom in QuasarLinux-BETA"
+}
 EOF
 
 grep -q '\brand-qus\b' /mnt/etc/mkinitcpio.conf || \
