@@ -291,7 +291,7 @@ fi
 
 # Установка базовых системных пакетов
 echo "Установка системных пакетов..."
-pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils pulseaudio pulseaudio-alsa 
+pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid xorg
 
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
