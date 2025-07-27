@@ -1,8 +1,6 @@
 #!/bin/bash
+etfont ter-v20n
 
-for i in {1..6}; do
-    sudo openvt -c $i -s -- setfont ter-v16n
-done
 
 read -p "у вас WIFI ?  (y/N): " iwifi
 if [[ ! "$iwifi" =~ ^[Yy]$ ]]; then 
