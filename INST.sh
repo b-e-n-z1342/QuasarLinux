@@ -129,7 +129,7 @@ echo "Активация SDDM..."
 sudo rc-update add sddm default
 
 echo "Настройка звука..."
-sudo pacman -R --noconfirm jack2 
+sudo pacman -Rns --noconfirm jack2 
 
 sleep 5
 
