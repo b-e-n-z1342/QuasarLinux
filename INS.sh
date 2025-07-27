@@ -1,4 +1,7 @@
 #!/bin/bash
+pacman -Sy terminus-font
+setfont ter-v20n
+sleep 2
 
 echo "
 ██████╗ ██╗   ██╗ █████╗ ███████╗ █████╗ ██████╗ 
@@ -156,7 +159,7 @@ echo "Продолжаем установку системы..."
 # pacstrap /mnt base linux linux-firmware ...
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
 if [ -d "pixmap" ]; then
@@ -261,7 +264,7 @@ else
     echo "Установка GRUB для BIOS..."
     grub-install --target=i386-pc \$DISK --recheck
 fi
-
+sleep 5
 # Генерация конфига GRUB с кастомным названием
 sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
@@ -271,7 +274,7 @@ if [ ! -f /boot/grub/grub.cfg ]; then
     echo "ОШИБКА: Конфиг GRUB не создан!"
     exit 1
 fi
-
+sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
@@ -292,7 +295,7 @@ fi
 # Установка базовых системных пакетов
 echo "Установка системных пакетов..."
 pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid xorg
-
+sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
 rc-update add dbus boot
