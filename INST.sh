@@ -80,7 +80,6 @@ pidfile="/run/sddm.pid"
 depend() {
     need dbus
     need elogind
-    need NetworkManager
     use udev
     keyword -shutdown
 }
