@@ -187,6 +187,8 @@ EOF
 sudo chmod +x /etc/local.d/fixing.start
 
 sudo rc-update add local default
+sudo rm ~/.bashrc
+sudo cp /etc/skel/bashrc ~/
 
 
 
