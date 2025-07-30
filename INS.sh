@@ -383,6 +383,7 @@ run_hook() {
     echo "Welcom to QuasarLinux-BETA"
 }
 EOF
+echo '[ -f ~/INSTALL.sh ] && bash ~/INSTALL.sh' >> /mnt/home/$USERNAME/.bashrc
 
 grep -q '\Quasar-branding\b' /mnt/etc/mkinitcpio.conf || \
 echo 'HOOKS+=(Quasar-branding)' | tee -a /mnt/etc/mkinitcpio.conf
