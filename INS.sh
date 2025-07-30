@@ -158,7 +158,7 @@ fi
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen plasma-nm linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
 rm -r /mnt/usr/share/pixmap
@@ -299,7 +299,6 @@ echo "Активация базовых OpenRC сервисов..."
 rc-update add dbus boot
 rc-update add udev boot
 rc-update add elogind boot
-rc-update add NetworkManager default
 rc-update add acpid default
 rc-update add alsa default
 
@@ -322,8 +321,12 @@ chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 cp INSTALL.sh /mnt/home/$USERNAME/
 chmod +x /mnt/home/$USERNAME/INSTALL.sh
 
-echo "FOUT=ter-v16n" >> /mnt/etc/vconsole.conf
-
+echo "FONT=ter-v16n" >> /mnt/etc/vconsole.conf
+cat << 'EOF' > /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+[device]
+wifi.backend=iwd
+EOF
+artix-chroot /mnt rc-update add NetworkManager default
 
 # Создание информационного файла
 cat > /mnt/home/$USERNAME/README.txt << README_EOF
