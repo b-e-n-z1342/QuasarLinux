@@ -161,6 +161,8 @@ echo "Установка базовой системы..."
 basestrap /mnt base base-devel openrc elogind-openrc linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
+rm -r /mnt/usr/share/pixmap
+sleep 1
 cp -r pixmap /mnt/usr/share/
 
 cp systemctl /mnt/usr/local/bin/
