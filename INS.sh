@@ -156,20 +156,16 @@ fi
 
 # Дальнейшие шаги установки...
 echo "Продолжаем установку системы..."
-# pacstrap /mnt base linux linux-firmware ...
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
+basestrap /mnt base base-devel openrc elogind-openrc linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
-if [ -d "pixmap" ]; then
-    cp -r pixmap /mnt/usr/share/
-fi
+cp -r pixmap /mnt/usr/share/
 
-if [ -f "systemctl" ]; then
-    cp systemctl /mnt/usr/local/bin/
-    chmod +x /mnt/usr/local/bin/systemctl
-fi
+cp systemctl /mnt/usr/local/bin/
+chmod +x /mnt/usr/local/bin/systemctl
+
 
 # Настройка fstab
 echo "Генерация fstab..."
@@ -382,14 +378,14 @@ EOF
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
 
-cat << 'EOF' > /mnt/etc/initcpio/hooks/brand-qus 
+cat << 'EOF' > /mnt/etc/initcpio/hooks/Quasar-branding 
 run_hook() {
-    echo "Welcom in QuasarLinux-BETA"
+    echo "Welcom to QuasarLinux-BETA"
 }
 EOF
 
-grep -q '\brand-qus\b' /mnt/etc/mkinitcpio.conf || \
-echo 'HOOKS+=(brand-qus)' | tee -a /mnt/etc/mkinitcpio.conf
+grep -q '\Quasar-branding\b' /mnt/etc/mkinitcpio.conf || \
+echo 'HOOKS+=(Quasar-branding)' | tee -a /mnt/etc/mkinitcpio.conf
 
 artix-chroot /mnt mkinitcpio -P
 
@@ -401,23 +397,18 @@ swapoff $SWAP_PART 2>/dev/null || true
 echo "=========================================="
 echo "      УСТАНОВКА QUASAR LINUX ЗАВЕРШЕНА!"
 echo "=========================================="
-echo ""
 echo "Базовая система успешно установлена!"
-echo ""
 echo "ЧТО БЫЛО УСТАНОВЛЕНО:"
 echo "- Загрузчик GRUB настроен и работает"
 echo "- Базовая система с консольными утилитами"
 echo "- Сетевые настройки (NetworkManager)" 
 echo "- Пользователь: $USERNAME"
 echo "- Совместимость systemctl команд"
-echo ""
 echo "СЛЕДУЮЩИЕ ШАГИ:"
 echo "1. Перезагрузите систему: reboot"
 echo "2. Войдите как пользователь: $USERNAME"
 echo "3. Запустите: ./INSTALL.sh"
 echo "4. Установите KDE Plasma и приложения"
-echo ""
 echo "ВНИМАНИЕ: Не забудьте извлечь установочный носитель!"
-echo ""
 echo "Добро пожаловать в Quasar Linux! 🚀"
 echo "=========================================="
