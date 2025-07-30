@@ -158,7 +158,7 @@ fi
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc linux-zen plasma-nm linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
+basestrap /mnt base base-devel openrc elogind-openrc  dhcpcd linux-zen plasma-nm linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
 rm -r /mnt/usr/share/pixmap
