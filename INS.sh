@@ -360,26 +360,7 @@ cat > /mnt/home/$USERNAME/README.txt << README_EOF
 
 Удачи! 🚀
 README_EOF
-cat /mnt/home/$USERNAME/.profile << EOF
-if  [ ! -f ~/.install_done ]; then
-    ~./INSTALL.sh
-    touch ~/.install_done
-fi
-EOF
 
-cat /mnt/home/$USERNAME/.bash_profile << EOF
-if  [ ! -f ~/.install_done ]; then
-    ~./INSTALL.sh
-    touch ~/.install_done
-fi
-EOF
-
-cat /mnt/home/$USERNAME/.xprofile << EOF
-if  [ ! -f ~/.install_done ]; then
-    ~./INSTALL.sh
-    touch ~/.install_done
-fi
-EOF
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
 
@@ -388,10 +369,25 @@ run_hook() {
     echo "Welcom to QuasarLinux-BETA"
 }
 EOF
-echo '[ -f ~/INSTALL.sh ] && bash ~/INSTALL.sh' >> /mnt/home/$USERNAME/.bashrc
 
-grep -q '\Quasar-branding\b' /mnt/etc/mkinitcpio.conf || \
-echo 'HOOKS+=(Quasar-branding)' | tee -a /mnt/etc/mkinitcpio.conf
+
+
+
+
+grep -q 'Quasar-branding' /mnt/etc/mkinitcpio.conf
+sed -i 's/HOOKS=(\(.*\))/HOOKS=(\1 Quasar-branding)/' /mnt/etc/mkinitcpio.conf
+
+cat << 'EOF' >> /mnt/home/$USERNAME/.bashrc
+if [ ! -f ~/.Quasar_post_done ]; then
+    ./INSTALL.sh
+    touch ~/.Quasar_post_done
+fi
+EOF
+
+
+
+
+
 
 artix-chroot /mnt mkinitcpio -P
 
