@@ -146,17 +146,7 @@ sleep 5
 
 sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 sleep 10
-# Создание OpenRC скрипта для pipewire
-sudo tee /etc/init.d/pipewire << 'EOF'
-#!/sbin/openrc-run
-command="/usr/bin/pipewire"
-command_user="root"
-pidfile="/run/pipewire.pid"
-depend() {
-    need dbus
-    need alsasound
-}
-EOF
+
 clear
 
 sleep 2
@@ -185,18 +175,6 @@ sudo rc-update add pipewire-pulse default
 
 
 
-cat >> /etc/local.d/fixing.start << 'EOF'
-#!/bin/bash
-if [ -z "DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval "$(dbus-launch --sh-syntax)"
-fi
-
-export XDG_RUNTIME_DIR="/run/user/$(id -u sddm)"
-[ -d "$XDG_RUNTIME_DIR" ] || {
-    mkdir -p "$XDG_RUNTIME_DIR"
-    chmod 700 "$XDG_RUNTIME_DIR"
-}
-EOF
 sudo tee -a /etc/elogind/logind.conf << 'EOF'
 HandlePowerKey=poweroff
 HandleSuspendKey=suspend
@@ -207,8 +185,7 @@ EOF
 sudo chmod +x /etc/local.d/fixing.start
 sudo pacman -Scc --noconfirm
 sudo rc-update add local default
-sudo rm ~/.bashrc
-sudo cp /etc/skel/bashrc ~/
+
 clear
 sleep 2
 echo "установка завершена!"
