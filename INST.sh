@@ -26,7 +26,7 @@ sleep 5
 sudo rc-update add seatd default
 sudo rc-service seatd start
 
-cat >> /.bash_profile << 'EOF'
+cat >> ~/.bash_profile << 'EOF'
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax)
 fi
@@ -58,12 +58,11 @@ cd yay-bin
 makepkg -si --noconfirm
 clear
 echo "Активировать Waydroid?"
-read -p "Начать установку? GO?  (y/N): " waydroid
-if [[ ! "waydroid" =~ ^[Yy]$ ]]; then
+read -p "Начать установку Waydroid?  (y/N): " waydroid
+if [[ "$waydroid" =~ ^[Yy]$ ]]; then
     yay -S waydroid --noconfirm
     waydroid init
 fi
-
 
 echo "Настройка SDDM..."
 sudo groupadd -f sddm
@@ -175,21 +174,37 @@ sudo rc-update add pipewire-pulse default
 
 
 
-sudo tee -a /etc/elogind/logind.conf << 'EOF'
-HandlePowerKey=poweroff
-HandleSuspendKey=suspend
-HandleHibernateKey=hibernate
-HandleLidSwitch=suspend
-EOF
+
+
+sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
+
+
+
+elogind_conf="/etc/elogind/logind.conf"
+add_or_replace_conf_param() {
+    local key="$1"
+    local value="$2"
+    if grep -q "^$key=" "$elogind_conf"; then
+        sudo sed -i "s|^$key=.*|$key=$value|" "$elogind_conf"
+    else
+        echo "$key=$value" | sudo tee -a "$elogind_conf" > /dev/null
+    fi
+}
+
+add_or_replace_conf_param "HandlePowerKey" "poweroff"
+add_or_replace_conf_param "HandleSuspendKey" "suspend"
+add_or_replace_conf_param "HandleHibernateKey" "hibernate"
+add_or_replace_conf_param "HandleLidSwitch" "suspend"
+
+
 
 sudo chmod +x /etc/local.d/fixing.start
-sudo pacman -Scc --noconfirm
 sudo rc-update add local default
-
+sudo pacman -Scc --noconfirm
 clear
-sleep 2
-echo "установка завершена!"
-reboot
 
+echo "Установка завершена! Перезагрузка через 10 секунд..."
+sleep 10
+reboot
 
 
