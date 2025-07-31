@@ -31,6 +31,8 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax)
 fi
 EOF
+clear
+
 flatpak install flathub -y
 
 
@@ -87,6 +89,7 @@ depend() {
     need dbus
     need elogind
     use udev
+    after bootmisc
     keyword -shutdown
 }
 
@@ -119,8 +122,8 @@ sudo chmod +x /etc/init.d/sddm
 sudo mkdir -p /etc/sddm.conf.d
 sudo tee /etc/sddm.conf.d/quasar.conf << 'SDDM_CONF_EOF'
 [General]
-HaltCommand=/usr/bin/poweroff
-RebootCommand=/usr/bin/reboot
+HaltCommand=/usr/bin/eloginctl poweroff
+RebootCommand=/usr/bin/eloginctl reboot
 
 [X11]
 SessionDir=/usr/share/xsessions
@@ -134,13 +137,13 @@ SDDM_CONF_EOF
 # Активация SDDM
 echo "Активация SDDM..."
 sudo rc-update add sddm default
-
+sudo usermod -aG elogind $(whoami)
 echo "Настройка звука..."
-sudo pacman -Rns --noconfirm jack2 
+sudo pacman -Rdd --noconfirm jack2  
 clear
 sleep 5
 
-sudo pacman -S --noconfirm pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
+sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 
 # Создание OpenRC скрипта для pipewire
 sudo tee /etc/init.d/pipewire << 'EOF'
@@ -176,7 +179,7 @@ echo ""
 BASHRC_EOF
 
 
-sudo rc-update add elogind defailt
+sudo rc-update add elogind default
 sudo rc-update add pipewire-pulse default
 
 
@@ -187,18 +190,28 @@ if [ -z "DBUS_SESSION_BUS_ADDRESS" ]; then
     eval "$(dbus-launch --sh-syntax)"
 fi
 
-export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export XDG_RUNTIME_DIR="/run/user/$(id -u sddm)"
 [ -d "$XDG_RUNTIME_DIR" ] || {
     mkdir -p "$XDG_RUNTIME_DIR"
     chmod 700 "$XDG_RUNTIME_DIR"
 }
 EOF
+sudo tee -a /etc/elogind/logind.conf << 'EOF'
+HandlePowerKey=poweroff
+HandleSuspendKey=suspend
+HandleHibernateKey=hibernate
+HandleLidSwitch=suspend
+EOF
 
 sudo chmod +x /etc/local.d/fixing.start
-
+sudo pacman -Scc --noconfirm
 sudo rc-update add local default
 sudo rm ~/.bashrc
 sudo cp /etc/skel/bashrc ~/
+clear
+sleep 2
+echo "установка завершена!"
+reboot
 
 
 
