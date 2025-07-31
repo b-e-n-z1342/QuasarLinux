@@ -31,6 +31,7 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax)
 fi
 EOF
+flatpak install flathub -y
 
 
 sleep 5
@@ -53,9 +54,14 @@ sleep 3
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
+clear
+echo "Активировать Waydroid?"
+read -p "Начать установку? GO?  (y/N): " waydroid
+if [[ ! "waydroid" =~ ^[Yy]$ ]]; then
+    yay -S waydroid --noconfirm
+    waydroid init
+fi
 
-yay -S waydroid --noconfirm
-waydroid -init
 
 echo "Настройка SDDM..."
 sudo groupadd -f sddm
@@ -131,7 +137,7 @@ sudo rc-update add sddm default
 
 echo "Настройка звука..."
 sudo pacman -Rns --noconfirm jack2 
-
+clear
 sleep 5
 
 sudo pacman -S --noconfirm pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
@@ -147,6 +153,9 @@ depend() {
     need alsasound
 }
 EOF
+clear
+
+sleep 2
 
 sudo chmod +x /etc/init.d/pipewire
 sudo rc-update add pipewire default
