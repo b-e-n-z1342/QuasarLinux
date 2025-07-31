@@ -1,5 +1,5 @@
 #!/bin/bash
-pacman -Sy terminus-font
+pacman -Sy terminus-font --noconfirm
 setfont ter-v20n
 sleep 2
 
