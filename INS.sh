@@ -266,7 +266,9 @@ ln -sf /etc/os-release /usr/lib/os-release 2>/dev/null || true
 export UEFI_MODE=$UEFI_MODE
 export DISK=$DISK
 export BOOT_PART=$BOOT_PART
+clear
 
+sleep 2
 # Установка GRUB
 echo "Устанавливаю загрузчик GRUB..."
 if [ \$UEFI_MODE -eq 1 ]; then
@@ -280,11 +282,12 @@ else
     echo "Установка GRUB для BIOS..."
     grub-install --target=i386-pc \$DISK --recheck
 fi
-sleep 5
+sleep 20
+clear
 # Генерация конфига GRUB с кастомным названием
 sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
-
+sleep 12 
 # Проверка установки GRUB
 if [ ! -f /boot/grub/grub.cfg ]; then
     echo "ОШИБКА: Конфиг GRUB не создан!"
