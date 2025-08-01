@@ -342,7 +342,7 @@ artix-chroot /mnt env UEFI_MODE="$UEFI_MODE" DISK="$DISK" /bin/bash <<'EOF'
 echo "Устанавливаю загрузчик GRUB..."
 if [ $UEFI_MODE -eq 1 ]; then
     echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
     
     # Более надежная проверка установки EFI
     if ! ls /boot/efi/EFI/GRUB/*.efi 2>/dev/null && ! ls /boot/efi/EFI/grub/*.efi 2>/dev/null; then
