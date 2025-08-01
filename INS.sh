@@ -158,7 +158,7 @@ fi
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc  dhcpcd linux-zen plasma-nm linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd networkmanager networkmanager-openrc fish mc htop wget curl git iwd terminus-font
+basestrap /mnt base base-devel runit elogind-runit runit-rc dhcpcd linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git iwd terminus-font
 
 # Копирование дополнительных файлов
 rm -r /mnt/usr/share/pixmap
@@ -210,6 +210,8 @@ cat > /etc/hosts << 'HOSTS_EOF'
 ::1 localhost
 127.0.1.1 quasarlinux.localdomain quasarlinux
 HOSTS_EOF
+
+pacman -S networkmanager networkmanager-runit
 
 # Полный ребрендинг системы
 cat > /etc/os-release << 'OS_EOF'
@@ -292,15 +294,15 @@ fi
 
 # Установка базовых системных пакетов
 echo "Установка системных пакетов..."
-pacman -S --noconfirm xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid xorg
+pacman -S --noconfirm acpid xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid xorg
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
-rc-update add dbus boot
-rc-update add udev boot
-rc-update add elogind boot
-rc-update add acpid default
-rc-update add alsa default
+ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
+ln -s /etc/sv/udev /etc/runit/runsvdir/default/
+ln -s /etc/sv/elogind /etc/runit/runsvdir/default/
+ln -s /etc/sv/acpid /etc/runit/runsvdir/default/
+ln -s /etc/sv/alsa /etc/runit/runsvdir/default/
 
 # Проверка активированных сервисов
 echo "=== АКТИВИРОВАННЫЕ СЕРВИСЫ ==="
