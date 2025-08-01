@@ -21,10 +21,11 @@ echo "установка Plasma"
 sudo pacman -Syy
 
 
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-openrc sddm sddm-openrc flatpak 
+sudo pacman -S --noconfirm plasma seatd go sddm sddm-runit dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-runit flatpak 
 sleep 5
-sudo rc-update add seatd default
-sudo rc-service seatd start
+
+sudo ln -s /etc/sv/seatd /etc/runit/runsvdir/default/
+
 
 cat >> ~/.bash_profile << 'EOF'
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
@@ -36,34 +37,45 @@ clear
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 
-
+clear
 sleep 5
-
+echo "Настройка Wine"
 wineboot --init
 
 sleep 2
 
 
-winetricks dxvk vkd3d corefonts vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet40 dotnet45 dotnet462 dotnet48 physx openal win10  --force -q --unattended
 
+winetricks --force -q --unattended corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
 
-#WINEDLLOVERRIDES="mscoree,mshtml=" WINEARCH=win64 winetricks --unattended --force -q corefonts tahoma cjkfonts vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022  dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
-
-#WINEDLLOVERRIDES="mscoree,mshtml=" WINEARCH=win64 winetricks --unattended --force -q mono gecko corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10 >/dev/null 2>&1
-
-winetricks win10
 sleep 3
+clear
 
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
 clear
-echo "Активировать Waydroid?"
-read -p "Начать установку Waydroid?  (y/N): " waydroid
+echo "Активировация   Waydroid"
+read -p "Начать установку Waydroid? (y/N): " waydroid
 if [[ "$waydroid" =~ ^[Yy]$ ]]; then
     yay -S waydroid --noconfirm
     waydroid init
+
+    mkdir -p /etc/sv/waydroid
+
+    cat << 'EOF' > /etc/sv/waydroid/run
+#!/bin/sh
+exec 2>&1
+exec waydroid container start
+EOF
+
+    chmod +x /etc/sv/waydroid/run
+
+    ln -sf /etc/sv/waydroid /etc/runit/runsvdir/default/
+
+    sv start waydroid
 fi
+clear
 
 echo "Настройка SDDM..."
 sudo groupadd -f sddm
@@ -75,48 +87,7 @@ sudo usermod -aG seat,video,input sddm
 
 
 
-# Создание OpenRC скрипта для SDDM
-sudo tee /etc/init.d/sddm << 'SDDM_EOF'
-#!/sbin/openrc-run
 
-name="SDDM Display Manager"
-description="Simple Desktop Display Manager"
-command="/usr/bin/sddm"
-command_user="root"
-pidfile="/run/sddm.pid"
-
-depend() {
-    need dbus
-    need elogind
-    use udev
-    after bootmisc
-    keyword -shutdown
-}
-
-start_pre() {
-    if [ ! -f /etc/sddm.conf ]; then
-        ewarn "Конфиг /etc/sddm.conf не найден! Создаю базовый"
-        sddm --example-config > /etc/sddm.conf
-    fi
-    
-    mkdir -p /var/run/sddm /var/lib/sddm /tmp/runtime-sddm
-    chown sddm:sddm /var/run/sddm /var/lib/sddm /tmp/runtime-sddm
-    chmod 0755 /var/run/sddm /var/lib/sddm
-    chmod 0700 /tmp/runtime-sddm
-    
-    export XDG_RUNTIME_DIR="/tmp/runtime-sddm"
-}
-
-start_post() {
-    einfo "SDDM запущен успешно"
-}
-
-stop_post() {
-    rm -rf /var/run/sddm/* /tmp/runtime-sddm/* 2>/dev/null || true
-}
-SDDM_EOF
-
-sudo chmod +x /etc/init.d/sddm
 
 # Настройка SDDM конфига
 sudo mkdir -p /etc/sddm.conf.d
@@ -136,7 +107,7 @@ SDDM_CONF_EOF
 
 # Активация SDDM
 echo "Активация SDDM..."
-sudo rc-update add sddm default
+sudo ln -s /etc/sv/sddm /etc/runit/runsvdir/default/
 sudo usermod -aG elogind $(whoami)
 clear
 echo "Настройка звука..."
@@ -144,15 +115,15 @@ sudo pacman -Rdd --noconfirm jack2
 
 sleep 5
 
-sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
-sleep 10
+sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-runit pipewire-pulse-runit lib32-pipewire-jack
+sleep 5
 
 clear
 
 sleep 2
 
 sudo chmod +x /etc/init.d/pipewire
-sudo rc-update add pipewire default
+sudo ln -s /etc/sv/pipewire /etc/runit/runsvdir/default/
 
 echo "Настройка темы и локализации..."
 sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
@@ -170,12 +141,8 @@ echo ""
 BASHRC_EOF
 
 
-sudo rc-update add elogind default
-sudo rc-update add pipewire-pulse default
-
-
-
-
+sudo ln -s /etc/sv/elogind /etc/runit/runsvdir/default/
+sudo ln -s /etc/sv/pipewire-pulse /etc/runit/runsvdir/default/
 
 sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
@@ -200,7 +167,7 @@ add_or_replace_conf_param "HandleLidSwitch" "suspend"
 
 
 sudo chmod +x /etc/local.d/fixing.start
-sudo rc-update add local default
+sudo ln -s /etc/sv/local /etc/runit/runsvdir/default/
 sudo pacman -Scc --noconfirm
 clear
 
