@@ -330,6 +330,23 @@ echo "=============================="
 
 EOF
 
+
+artix-chroot /mnt env UEFI_MODE="$UEFI_MODE" DISK="$DISK" /bin/bash <<'EOF'
+echo "DEBUG: вошли в блок chroot"
+
+if [ "$UEFI_MODE" -eq 1 ]; then
+    echo "UEFI режим"
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
+else
+    echo "BIOS режим"
+    grub-install --target=i386-pc "$DISK" --recheck
+fi
+
+sleep 2
+grub-mkconfig -o /boot/grub/grub.cfg
+EOF
+
+
 cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
 
