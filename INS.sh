@@ -165,9 +165,7 @@ rm -r /mnt/usr/share/pixmap
 sleep 1
 cp -r pixmap /mnt/usr/share/
 
-cp systemctl /mnt/usr/local/bin/
-chmod +x /mnt/usr/local/bin/systemctl
-
+\
 
 # Настройка fstab
 echo "Генерация fstab..."
@@ -181,6 +179,11 @@ artix-chroot /mnt passwd $USERNAME
 echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
 artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
+
+mount --types proc /proc /mnt/proc
+mount --rbind /sys /mnt/sys
+mount --rbind /dev /mnt/dev
+mount --rbind /run /mnt/run
 
 # Chroot-секция настройки
 echo "Переход в chroot-окружение..."
