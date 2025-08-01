@@ -335,45 +335,63 @@ echo "=============================="
 
 EOF
 sleep 5
-echo "========================================================================================================================="
-
+clear
+echo "==========================================================================================================================="
 artix-chroot /mnt env UEFI_MODE="$UEFI_MODE" DISK="$DISK" /bin/bash <<'EOF'
-# Установка GRUB
-echo "Устанавливаю загрузчик GRUB..."
-if [ $UEFI_MODE -eq 1 ]; then
-    echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
-    
-    # Более надежная проверка установки EFI
-    if ! ls /boot/efi/EFI/GRUB/*.efi 2>/dev/null && ! ls /boot/efi/EFI/grub/*.efi 2>/dev/null; then
-        echo "ОШИБКА: GRUB не установился в EFI раздел!"
+set -euo pipefail
+
+echo "======= Установка загрузчика ======="
+
+if [ "${UEFI_MODE:-0}" -eq 1 ]; then
+    echo "Режим UEFI: устанавливаем GRUB..."
+    pacman -S --noconfirm grub efibootmgr
+
+    grub-install \
+        --target=x86_64-efi \
+        --efi-directory=/boot/efi \
+        --bootloader-id=GRUB \
+        --recheck \
+        --removable
+
+    if ! ls /boot/efi/EFI/GRUB/*.efi >/dev/null 2>&1 && \
+       ! ls /boot/efi/EFI/grub/*.efi >/dev/null 2>&1; then
+        echo "ОШИБКА: GRUB не установлен в EFI-раздел!"
         find /boot/efi/EFI -name '*.efi' | grep -i grub || exit 1
     fi
+
+    echo "Настройка GRUB_DISTRIBUTOR..."
+    if grep -q '^GRUB_DISTRIBUTOR=' /etc/default/grub; then
+        sed -i 's|^GRUB_DISTRIBUTOR=.*|GRUB_DISTRIBUTOR="Quasar Linux"|' /etc/default/grub
+    else
+        echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+    fi
+
+    echo "Генерируем конфигурацию GRUB..."
+    grub-mkconfig -o /boot/grub/grub.cfg
+
+    if [ ! -f /boot/grub/grub.cfg ]; then
+        echo "ОШИБКА: /boot/grub/grub.cfg не создан!"
+        ls -la /boot/grub/
+        exit 1
+    fi
+
 else
-    echo "Установка GRUB для BIOS..."
-    grub-install --target=i386-pc --boot-directory=/boot $DISK --recheck
+    echo "Режим Legacy/CSM: устанавливаем Syslinux..."
+    pacman -S --noconfirm syslinux
+
+    echo "Устанавливаем Syslinux в MBR и генерируем конфиг..."
+    syslinux-install_update -i -a -m
+
+    if [ ! -f /boot/syslinux/syslinux.cfg ]; then
+        echo "Внимание: /boot/syslinux/syslinux.cfg не найден."
+        echo "Скопируйте или создайте свой конфиг в эту директорию."
+    fi
 fi
 
-# Генерация конфига GRUB
-echo "Настройка GRUB_DISTRIBUTOR..."
-if grep -q 'GRUB_DISTRIBUTOR=' /etc/default/grub; then
-    sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub
-else
-    echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-fi
-
-echo "Генерация конфигурации GRUB..."
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Проверка создания конфига
-if [ ! -f /boot/grub/grub.cfg ]; then
-    echo "ОШИБКА: Конфиг GRUB не создан! Проверьте:"
-    ls -la /boot/grub/
-    exit 1
-fi
+echo "=== Установка загрузчика завершена успешно ==="
 EOF
 
-echo "========================================================================================================================="
+echo "==========================================================================================================================="
 
 
 cp INSTALL.sh /mnt/home/$USERNAME/
