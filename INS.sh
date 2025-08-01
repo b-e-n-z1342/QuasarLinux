@@ -2,7 +2,7 @@
 pacman -Sy terminus-font --noconfirm
 setfont ter-v20n
 sleep 2
-
+clear
 echo "
 ██████╗ ██╗   ██╗ █████╗ ███████╗ █████╗ ██████╗ 
 ██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔══██╗██╔══██╗
@@ -153,41 +153,53 @@ if [[ "$make_swap" =~ ^[Yy]$ ]]; then
         echo "SWAP активирован: $SWAP_PART"
     fi
 fi
-
+clear
 # Дальнейшие шаги установки...
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel runit elogind-runit runit-rc dhcpcd linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git iwd terminus-font
+basestrap /mnt base base-devel runit elogind-runit mkinitcpio runit-rc  linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git terminus-font pciutils 
 
 # Копирование дополнительных файлов
-rm -r /mnt/usr/share/pixmap
+[ -d /mnt/usr/share/pixmap ] && rm -r /mnt/usr/share/pixmap
+
 sleep 1
 cp -r pixmap /mnt/usr/share/
 
-\
+
 
 # Настройка fstab
-echo "Генерация fstab..."
-fstabgen -U /mnt >> /mnt/etc/fstab
-cp /etc/pacman.conf /mnt/etc/
-
-# Создание пользователя
-read -p "Введите имя нового пользователя: " USERNAME
-artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
-artix-chroot /mnt passwd $USERNAME
-echo "Создаём пароль для root"
-artix-chroot /mnt passwd 
-artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
-
 mount --types proc /proc /mnt/proc
 mount --rbind /sys /mnt/sys
 mount --rbind /dev /mnt/dev
 mount --rbind /run /mnt/run
 
-# Chroot-секция настройки
+echo "Генерация fstab..."
+mkdir -p /mnt/etc
+fstabgen -U /mnt >> /mnt/etc/fstab
+cp /etc/pacman.conf /mnt/etc/
+clear
+# Создание пользователя
+echo "================================================================="
+read -p "Введите имя нового пользователя: " USERNAME
+artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
+artix-chroot /mnt passwd $USERNAME
+echo "================================================================="
+echo "Создаём пароль для root"
+artix-chroot /mnt passwd 
+artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
+mkdir -p /mnt/home/$USERNAME
+echo "================================================================="
+clear
+
+
+# Chroot-секция настройки ============================================================================================================================================================================
+
+
+
 echo "Переход в chroot-окружение..."
-artix-chroot /mnt /bin/bash << EOF
+sleep 2
+artix-chroot /mnt env UEFI_MODE=$UEFI_MODE DISK=$DISK BOOT_PART=$BOOT_PART /bin/bash << EOF
 
 # Права доступа
 chmod 600 /etc/{shadow,gshadow}
@@ -201,13 +213,14 @@ ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc
 
 # Локализация
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
+sed -i 's/^#\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+sed -i 's/^#\(ru_RU.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+
 locale-gen
 echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
 # Сеть
-echo "quasarlinux" > /etc/hostname
+echo "quasar-pc" > /etc/hostname
 cat > /etc/hosts << 'HOSTS_EOF'
 127.0.0.1 localhost
 ::1 localhost
@@ -244,7 +257,7 @@ echo "Quasar Linux" > /etc/issue.net
 echo "Welcome to Quasar Linux!" > /etc/motd
 
 # Убираем автогенерацию
-rm -rf /etc/update-motd.d/ 2>/dev/null || true
+[ -d /etc/update-motd.d/ ] && rm -rf /etc/update-motd.d/
 
 # Симлинк для совместимости
 ln -sf /etc/os-release /usr/lib/os-release 2>/dev/null || true
@@ -258,7 +271,7 @@ export BOOT_PART=$BOOT_PART
 echo "Устанавливаю загрузчик GRUB..."
 if [ \$UEFI_MODE -eq 1 ]; then
     echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
     if [ ! -d /boot/efi/EFI/GRUB ]; then
         echo "ОШИБКА: GRUB не установился в EFI раздел!"
         exit 1
@@ -297,7 +310,7 @@ fi
 
 # Установка базовых системных пакетов
 echo "Установка системных пакетов..."
-pacman -S --noconfirm acpid xorg-server xorg-xinit xorg-xrandr xorg-xauth xf86-input-libinput alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid xorg
+pacman -S --noconfirm xorg alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
@@ -309,14 +322,12 @@ ln -s /etc/sv/alsa /etc/runit/runsvdir/default/
 
 # Проверка активированных сервисов
 echo "=== АКТИВИРОВАННЫЕ СЕРВИСЫ ==="
-rc-update show
+ls /etc/runit/runsvdir/default/
 echo "=============================="
 
 EOF
-cp INSTALL.sh /mnt/root/
-cp INSTALL.sh /mnt/home/$USERNAME/
 
-cp INST.sh /mnt/root/
+cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
 
 
@@ -324,14 +335,14 @@ chmod +x /mnt/root/INST.sh
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 cp INSTALL.sh /mnt/home/$USERNAME/
+
 chmod +x /mnt/home/$USERNAME/INSTALL.sh
+chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INSTALL.sh
+
 
 echo "FONT=ter-v16n" >> /mnt/etc/vconsole.conf
-cat << 'EOF' > /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
-[device]
-wifi.backend=iwd
-EOF
-artix-chroot /mnt rc-update add NetworkManager default
+
+artix-chroot /mnt sv enable NetworkManager 
 
 # Создание информационного файла
 cat > /mnt/home/$USERNAME/README.txt << README_EOF
@@ -355,13 +366,9 @@ cat > /mnt/home/$USERNAME/README.txt << README_EOF
 4. Следуйте инструкциям для установки KDE Plasma
 
 СПРАВКА:
-- Команды systemctl работают (совместимость с OpenRC)
+- Команды systemctl будут переводится в runit (только перевод команд!)
 - Файлы конфигурации в /etc/
 - Логи системы: sudo journalctl или dmesg
-
-ПОДДЕРЖКА:
-- Документация: /usr/share/doc/quasar/
-- Сообщество: https://quasarlinux.org
 
 Удачи! 🚀
 README_EOF
@@ -379,8 +386,7 @@ EOF
 
 
 
-grep -q 'Quasar-branding' /mnt/etc/mkinitcpio.conf
-sed -i 's/HOOKS=(\(.*\))/HOOKS=(\1 Quasar-branding)/' /mnt/etc/mkinitcpio.conf
+sed -i '/^HOOKS=/ s/)/ Quasar-branding)/' /mnt/etc/mkinitcpio.conf
 
 cat << 'EOF' >> /mnt/home/$USERNAME/.bashrc
 if [ ! -f ~/.Quasar_post_done ]; then
@@ -404,7 +410,7 @@ swapoff $SWAP_PART 2>/dev/null || true
 echo "=========================================="
 echo "      УСТАНОВКА QUASAR LINUX ЗАВЕРШЕНА!"
 echo "=========================================="
-echo "Базовая система успешно установлена!"
+echo "Базовая система успешно установлена!"  
 echo "ЧТО БЫЛО УСТАНОВЛЕНО:"
 echo "- Загрузчик GRUB настроен и работает"
 echo "- Базовая система с консольными утилитами"
