@@ -230,7 +230,7 @@ cat > /etc/hosts << 'HOSTS_EOF'
 127.0.1.1 quasarlinux.localdomain quasarlinux
 HOSTS_EOF
 
-pacman -S networkmanager networkmanager-runit
+pacman -S networkmanager networkmanager-openrc
 
 # Полный ребрендинг системы
 cat > /etc/os-release << 'OS_EOF'
@@ -301,10 +301,7 @@ rc-update add elogind default
 rc-update add acpid default
 rc-update add alsa default
 
-# Проверка активированных сервисов
-echo "=== АКТИВИРОВАННЫЕ СЕРВИСЫ ==="
-ls /etc/runit/runsvdir/default/
-echo "=============================="
+
 
 EOF
 sleep 5
@@ -313,6 +310,10 @@ echo "==========================================================================
 artix-chroot /mnt /bin/bash <<'EOF'
 # Установка GRUB
 echo "Устанавливаю загрузчик GRUB..."
+UEFI_MODE=0
+[ -d /sys/firmware/efi ] && UEFI_MODE=1
+
+
 if [ \$UEFI_MODE -eq 1 ]; then
     echo "Установка GRUB для UEFI..."
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
