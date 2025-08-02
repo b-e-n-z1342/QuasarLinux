@@ -1,7 +1,6 @@
 #!/bin/bash
 pacman -Sy terminus-font --noconfirm
 setfont ter-v20n
-sleep 2
 clear
 echo "=================================================================================================
 =                                                                                               =
@@ -161,7 +160,7 @@ clear
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel runit elogind-runit mkinitcpio runit-rc  linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git terminus-font pciutils 
+basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git terminus-font pciutils 
 
 # Копирование дополнительных файлов
 [ -d /mnt/usr/share/pixmap ] && rm -r /mnt/usr/share/pixmap
@@ -187,6 +186,7 @@ echo "================================================================="
 read -p "Введите имя нового пользователя: " USERNAME
 artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
 artix-chroot /mnt passwd $USERNAME
+clear
 echo "================================================================="
 echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
@@ -271,33 +271,6 @@ export DISK=$DISK
 export BOOT_PART=$BOOT_PART
 clear
 
-sleep 2
-echo "========================================================================================================================="
-# Установка GRUB
-echo "Устанавливаю загрузчик GRUB..."
-if [ \$UEFI_MODE -eq 1 ]; then
-    echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
-    if [ ! -d /boot/efi/EFI/GRUB ]; then
-        echo "ОШИБКА: GRUB не установился в EFI раздел!"
-        exit 1
-    fi
-else
-    echo "Установка GRUB для BIOS..."
-    grub-install --target=i386-pc \$DISK --recheck
-fi
-sleep 20
-clear
-# Генерация конфига GRUB с кастомным названием
-sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg
-sleep 12 
-# Проверка установки GRUB
-if [ ! -f /boot/grub/grub.cfg ]; then
-    echo "ОШИБКА: Конфиг GRUB не создан!"
-    exit 1
-fi
-echo "========================================================================================================================="
 sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
@@ -322,11 +295,11 @@ pacman -S --noconfirm xorg alsa-utils kbd pipewire pipewire-alsa pipewire-pulse 
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
-ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
-ln -s /etc/sv/udev /etc/runit/runsvdir/default/
-ln -s /etc/sv/elogind /etc/runit/runsvdir/default/
-ln -s /etc/sv/acpid /etc/runit/runsvdir/default/
-ln -s /etc/sv/alsa /etc/runit/runsvdir/default/
+rc-update add dbus default
+rc-update add udev default
+rc-update add elogind default
+rc-update add acpid default
+rc-update add alsa default
 
 # Проверка активированных сервисов
 echo "=== АКТИВИРОВАННЫЕ СЕРВИСЫ ==="
@@ -337,7 +310,7 @@ EOF
 sleep 5
 clear
 echo "==========================================================================================================================="
-artix-chroot /mnt env UEFI_MODE="$UEFI_MODE" DISK="$DISK" /bin/bash <<'EOF'
+artix-chroot /mnt /bin/bash <<'EOF'
 # Установка GRUB
 echo "Устанавливаю загрузчик GRUB..."
 if [ \$UEFI_MODE -eq 1 ]; then
@@ -379,7 +352,7 @@ chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INSTALL.sh
 
 echo "FONT=ter-v16n" >> /mnt/etc/vconsole.conf
 
-artix-chroot /mnt sv enable NetworkManager 
+artix-chroot /mnt rc-update add NetworkManager default 
 
 
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
@@ -391,7 +364,7 @@ run_hook() {
 }
 EOF
 
-
+cp /mnt/etc/initcpio/hooks/Quasar-branding  /usr/lib/initcpio/hooks/
 
 sed -i '/^HOOKS=/ s/)/ Quasar-branding)/' /mnt/etc/mkinitcpio.conf
 
