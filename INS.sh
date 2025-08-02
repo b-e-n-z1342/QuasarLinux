@@ -338,62 +338,32 @@ sleep 5
 clear
 echo "==========================================================================================================================="
 artix-chroot /mnt env UEFI_MODE="$UEFI_MODE" DISK="$DISK" /bin/bash <<'EOF'
-set -euo pipefail
-
-echo "======= Установка загрузчика ======="
-
-if [ "${UEFI_MODE:-0}" -eq 1 ]; then
-    echo "Режим UEFI: устанавливаем GRUB..."
-    pacman -S --noconfirm grub efibootmgr
-
-    grub-install \
-        --target=x86_64-efi \
-        --efi-directory=/boot/efi \
-        --bootloader-id=GRUB \
-        --recheck \
-        --removable
-
-    if ! ls /boot/efi/EFI/GRUB/*.efi >/dev/null 2>&1 && \
-       ! ls /boot/efi/EFI/grub/*.efi >/dev/null 2>&1; then
-        echo "ОШИБКА: GRUB не установлен в EFI-раздел!"
-        find /boot/efi/EFI -name '*.efi' | grep -i grub || exit 1
-    fi
-
-    echo "Настройка GRUB_DISTRIBUTOR..."
-    if grep -q '^GRUB_DISTRIBUTOR=' /etc/default/grub; then
-        sed -i 's|^GRUB_DISTRIBUTOR=.*|GRUB_DISTRIBUTOR="Quasar Linux"|' /etc/default/grub
-    else
-        echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-    fi
-
-    echo "Генерируем конфигурацию GRUB..."
-    grub-mkconfig -o /boot/grub/grub.cfg
-
-    if [ ! -f /boot/grub/grub.cfg ]; then
-        echo "ОШИБКА: /boot/grub/grub.cfg не создан!"
-        ls -la /boot/grub/
+# Установка GRUB
+echo "Устанавливаю загрузчик GRUB..."
+if [ \$UEFI_MODE -eq 1 ]; then
+    echo "Установка GRUB для UEFI..."
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
+    if [ ! -d /boot/efi/EFI/GRUB ]; then
+        echo "ОШИБКА: GRUB не установился в EFI раздел!"
         exit 1
     fi
-
 else
-    echo "Режим Legacy/CSM: устанавливаем Syslinux..."
-    pacman -S --noconfirm syslinux
-
-    echo "Устанавливаем Syslinux в MBR и генерируем конфиг..."
-    syslinux-install_update -i -a -m
-
-    if [ ! -f /boot/syslinux/syslinux.cfg ]; then
-        echo "Внимание: /boot/syslinux/syslinux.cfg не найден."
-        echo "Скопируйте или создайте свой конфиг в эту директорию."
-    fi
+    echo "Установка GRUB для BIOS..."
+    grub-install --target=i386-pc \$DISK --recheck
 fi
-
-echo "=== Установка загрузчика завершена успешно ==="
+sleep 20
+clear
+# Генерация конфига GRUB с кастомным названием
+sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
+sleep 12 
+# Проверка установки GRUB
+if [ ! -f /boot/grub/grub.cfg ]; then
+    echo "ОШИБКА: Конфиг GRUB не создан!"
+    exit 1
+fi
+echo "========================================================================================================================="
 EOF
-
-echo "==========================================================================================================================="
-
-
 cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
 
@@ -411,34 +381,6 @@ echo "FONT=ter-v16n" >> /mnt/etc/vconsole.conf
 
 artix-chroot /mnt sv enable NetworkManager 
 
-# Создание информационного файла
-cat > /mnt/home/$USERNAME/README.txt << README_EOF
-===========================================
-      ДОБРО ПОЖАЛОВАТЬ В QUASAR LINUX!
-===========================================
-
-Базовая установка завершена успешно!
-
-ЧТО УСТАНОВЛЕНО:
-- Базовая система Quasar Linux
-- Консольные утилиты (mc, htop, nano)
-- Сетевые инструменты (NetworkManager)
-- Базовые драйверы видеокарты
-- Звуковая подсистема (ALSA)
-
-СЛЕДУЮЩИЕ ШАГИ:
-1. Перезагрузите систему: sudo reboot
-2. Войдите в систему через консоль
-3. Запустите: ./INST.sh
-4. Следуйте инструкциям для установки KDE Plasma
-
-СПРАВКА:
-- Команды systemctl будут переводится в runit (только перевод команд!)
-- Файлы конфигурации в /etc/
-- Логи системы: sudo journalctl или dmesg
-
-Удачи! 🚀
-README_EOF
 
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
@@ -448,8 +390,6 @@ run_hook() {
     echo "Welcom to QuasarLinux-BETA"
 }
 EOF
-
-
 
 
 
