@@ -307,45 +307,38 @@ EOF
 sleep 5
 clear
 echo "==========================================================================================================================="
-# Установка GRUB в chroot
-UEFI_MODE=0
-[ -d /sys/firmware/efi ] && UEFI_MODE=1
+cat > /mnt/install-grub.sh << 'EOF'
+#!/bin/bash
+set -eux
 
-artix-chroot /mnt /bin/bash << 'EOF'
+# Определяем режим загрузки
+UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
 
-echo "=== Установка загрузчика GRUB ==="
-if [ $UEFI_MODE -eq 1 ]; then
-    echo "Режим UEFI: устанавливаем GRUB под UEFI..."
-    grub-install \
-        --target=x86_64-efi \
-        --efi-directory=/boot/efi \
-        --bootloader-id="Quasar Linux" \
-        --removable \
-        --recheck || {
-            echo "ОШИБКА: grub-install завершился с ошибкой!"; exit 1;
-        }
+# Монтируем /boot или /boot/efi, если надо
+if [ "$UEFI_MODE" -eq 1 ]; then
+  mount | grep -q /boot/efi || mount "$BOOT_PART" /boot/efi
 else
-    echo "Режим BIOS: устанавливаем GRUB под BIOS..."
-    grub-install \
-        --target=i386-pc \
-        "$DISK" \
-        --recheck || {
-            echo "ОШИБКА: grub-install завершился с ошибкой!"; exit 1;
-        }
+  mount | grep -q '/boot ' || mount "$BOOT_PART" /boot
 fi
 
-echo "Генерируем конфиг /boot/grub/grub.cfg..."
-# Устанавливаем свой дистрибутив в меню
+# Ставим GRUB
+if [ "$UEFI_MODE" -eq 1 ]; then
+  grub-install --target=x86_64-efi --efi-directory=/boot/efi \
+    --bootloader-id="Quasar Linux" --removable --recheck
+else
+  grub-install --target=i386-pc "$DISK" --recheck
+fi
+
+# Конфигурируем
 sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub \
-    || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-
-grub-mkconfig -o /boot/grub/grub.cfg || {
-    echo "ОШИБКА: grub-mkconfig не смог создать конфиг!"; exit 1;
-}
-
-echo "GRUB успешно установлен и сконфигурирован."
+  || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
 EOF
-clear
+
+chmod +x /mnt/install-grub.sh
+
+artix-chroot /mnt /root/install-grub.sh 2>&1 | tee /mnt/root/grub-install.log
+
 echo "========================================================================================================================="
 EOF
 cp INSTALL.sh /mnt/home/$USERNAME/
