@@ -114,7 +114,7 @@ else
         mkfs.fat -F32 $BOOT_PART
     else
         echo "Форматирование BOOT: $BOOT_PART"
-        mkfs.ext4 -F $BOOT_PART
+        mkfs.ext2 -F $BOOT_PART
     fi
 
     echo "Форматирование ROOT: $ROOT_PART"
