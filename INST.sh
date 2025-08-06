@@ -63,17 +63,23 @@ if [[ "$waydroid" =~ ^[Yy]$ ]]; then
 
     mkdir -p /etc/sv/waydroid
 
-    cat << 'EOF' > /etc/sv/waydroid/run
-#!/bin/sh
-exec 2>&1
-exec waydroid container start
+    cat << 'EOF' > /etc/init.d/waydroid
+#!/sbin/openrc-run
+# Waydroid контейнер
+
+description="Запуск Waydroid-контейнера"
+command=/usr/bin/waydroid
+command_args="container start"
+pidfile=/run/waydroid.pid
+command_background=false
+
+depend() {
+    need localmount
+    use net
+}
 EOF
-
-    chmod +x /etc/sv/waydroid/run
-
-    ln -sf /etc/sv/waydroid /etc/runit/runsvdir/default/
-
-    sv start waydroid
+    chmod +x /etc/init.d/waydroid
+    rc-update add waydroid default
 fi
 clear
 
@@ -89,25 +95,10 @@ sudo usermod -aG seat,video,input sddm
 
 
 
-# Настройка SDDM конфига
-sudo mkdir -p /etc/sddm.conf.d
-sudo tee /etc/sddm.conf.d/quasar.conf << 'SDDM_CONF_EOF'
-[General]
-HaltCommand=/usr/bin/eloginctl poweroff
-RebootCommand=/usr/bin/eloginctl reboot
-
-[X11]
-SessionDir=/usr/share/xsessions
-XauthPath=/usr/bin/xauth
-
-[Wayland]
-SessionDir=/usr/share/wayland-sessions
-EnableHiDPI=true
-SDDM_CONF_EOF
 
 # Активация SDDM
 echo "Активация SDDM..."
-sudo ln -s /etc/sv/sddm /etc/runit/runsvdir/default/
+sudo rc-update add sddm  default
 sudo usermod -aG elogind $(whoami)
 clear
 echo "Настройка звука..."
@@ -115,7 +106,7 @@ sudo pacman -Rdd --noconfirm jack2
 
 sleep 5
 
-sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-runit pipewire-pulse-runit lib32-pipewire-jack
+sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 sleep 5
 
 clear
@@ -123,7 +114,7 @@ clear
 sleep 2
 
 sudo chmod +x /etc/init.d/pipewire
-sudo ln -s /etc/sv/pipewire /etc/runit/runsvdir/default/
+sudo rc-update add pipewire default
 
 echo "Настройка темы и локализации..."
 sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
@@ -141,8 +132,8 @@ echo ""
 BASHRC_EOF
 
 
-sudo ln -s /etc/sv/elogind /etc/runit/runsvdir/default/
-sudo ln -s /etc/sv/pipewire-pulse /etc/runit/runsvdir/default/
+sudo rc-update add elogind default
+sudo rc-update add pipewire-pulse default
 
 sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
@@ -167,7 +158,7 @@ add_or_replace_conf_param "HandleLidSwitch" "suspend"
 
 
 sudo chmod +x /etc/local.d/fixing.start
-sudo ln -s /etc/sv/local /etc/runit/runsvdir/default/
+sudo rc-update add local default
 sudo pacman -Scc --noconfirm
 clear
 
