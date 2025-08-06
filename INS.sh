@@ -45,7 +45,7 @@ if [[ "$PREPARED" =~ ^[Yy]$ ]]; then
         echo "Ошибка: EFI раздел не смонтирован в /mnt/boot/efi!"
         exit 1
     fi
-    
+    #!/bin/bash
     echo "Текущая разметка:"
     lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
 else
@@ -202,7 +202,7 @@ clear
 echo "========================================================================================================================="
 echo "Переход в chroot-окружение..."
 sleep 2
-artix-chroot /mnt env UEFI_MODE=$UEFI_MODE DISK=$DISK BOOT_PART=$BOOT_PART /bin/bash << EOF
+artix-chroot /mnt /bin/bash << EOF
 
 # Права доступа
 chmod 600 /etc/{shadow,gshadow}
@@ -307,35 +307,45 @@ EOF
 sleep 5
 clear
 echo "==========================================================================================================================="
-artix-chroot /mnt /bin/bash <<'EOF'
-# Установка GRUB
-echo "Устанавливаю загрузчик GRUB..."
+# Установка GRUB в chroot
 UEFI_MODE=0
 [ -d /sys/firmware/efi ] && UEFI_MODE=1
 
+artix-chroot /mnt /bin/bash << 'EOF'
 
-if [ \$UEFI_MODE -eq 1 ]; then
-    echo "Установка GRUB для UEFI..."
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck --removable
-    if [ ! -d /boot/efi/EFI/GRUB ]; then
-        echo "ОШИБКА: GRUB не установился в EFI раздел!"
-        exit 1
-    fi
+echo "=== Установка загрузчика GRUB ==="
+if [ $UEFI_MODE -eq 1 ]; then
+    echo "Режим UEFI: устанавливаем GRUB под UEFI..."
+    grub-install \
+        --target=x86_64-efi \
+        --efi-directory=/boot/efi \
+        --bootloader-id="Quasar Linux" \
+        --removable \
+        --recheck || {
+            echo "ОШИБКА: grub-install завершился с ошибкой!"; exit 1;
+        }
 else
-    echo "Установка GRUB для BIOS..."
-    grub-install --target=i386-pc \$DISK --recheck
+    echo "Режим BIOS: устанавливаем GRUB под BIOS..."
+    grub-install \
+        --target=i386-pc \
+        "$DISK" \
+        --recheck || {
+            echo "ОШИБКА: grub-install завершился с ошибкой!"; exit 1;
+        }
 fi
-sleep 20
+
+echo "Генерируем конфиг /boot/grub/grub.cfg..."
+# Устанавливаем свой дистрибутив в меню
+sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub \
+    || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+
+grub-mkconfig -o /boot/grub/grub.cfg || {
+    echo "ОШИБКА: grub-mkconfig не смог создать конфиг!"; exit 1;
+}
+
+echo "GRUB успешно установлен и сконфигурирован."
+EOF
 clear
-# Генерация конфига GRUB с кастомным названием
-sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg
-sleep 12 
-# Проверка установки GRUB
-if [ ! -f /boot/grub/grub.cfg ]; then
-    echo "ОШИБКА: Конфиг GRUB не создан!"
-    exit 1
-fi
 echo "========================================================================================================================="
 EOF
 cp INSTALL.sh /mnt/home/$USERNAME/
