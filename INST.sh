@@ -21,10 +21,10 @@ echo "установка Plasma"
 sudo pacman -Syy
 
 
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-runit dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly xorg xorg-xinit pavucontrol networkmanager networkmanager-runit flatpak 
+sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak 
 sleep 5
 
-sudo ln -s /etc/sv/seatd /etc/runit/runsvdir/default/
+sudo rc-update add seatd default
 
 
 cat >> ~/.bash_profile << 'EOF'
