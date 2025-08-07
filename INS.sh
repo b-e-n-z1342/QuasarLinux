@@ -168,6 +168,34 @@ basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-
 sleep 1
 cp -r pixmap /mnt/usr/share/
 
+cat << 'EOFRC' > /mnt/etc/sysctl.d/99-quasar.conf
+kernel.hostname = QuasarLinux
+EOFRC
+
+
+cat << 'EOF' > /mnt/etc/initcpio/hooks/quasar-branding 
+run_hook() {
+    echo "Welcom to QuasarLinux-BETA" > /etc/issue
+}
+EOF
+
+cp /mnt/etc/initcpio/hooks/quasar-branding  /usr/lib/initcpio/hooks/
+
+sed -i '/^HOOKS=/ s/)/ quasar-branding)/' /mnt/etc/mkinitcpio.conf
+
+
+
+cp /etc/issue /mnt/etc/
+
+
+
+
+
+
+
+
+
+
 
 
 # Настройка fstab
@@ -176,6 +204,7 @@ mount --rbind /sys /mnt/sys
 mount --rbind /dev /mnt/dev
 mount --rbind /run /mnt/run
 
+clear
 echo "Генерация fstab..."
 mkdir -p /mnt/etc
 fstabgen -U /mnt >> /mnt/etc/fstab
@@ -299,7 +328,6 @@ rc-update add dbus default
 rc-update add udev default
 rc-update add elogind default
 rc-update add acpid default
-rc-update add alsa default
 
 
 
@@ -313,13 +341,6 @@ set -eux
 
 # Определяем режим загрузки
 UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
-
-# Монтируем /boot или /boot/efi, если надо
-if [ "$UEFI_MODE" -eq 1 ]; then
-  mount | grep -q /boot/efi || mount "$BOOT_PART" /boot/efi
-else
-  mount | grep -q '/boot ' || mount "$BOOT_PART" /boot
-fi
 
 # Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
@@ -337,15 +358,14 @@ EOF
 
 chmod +x /mnt/install-grub.sh
 
-artix-chroot /mnt /root/install-grub.sh 2>&1 | tee /mnt/root/grub-install.log
+artix-chroot /mnt /install-grub.sh 2>&1 | tee /grub-install.log
 
 echo "========================================================================================================================="
-EOF
 cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
 
 
-chmod +x /mnt/root/INST.sh
+
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
 cp INSTALL.sh /mnt/home/$USERNAME/
@@ -362,15 +382,7 @@ artix-chroot /mnt rc-update add NetworkManager default
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
 
-cat << 'EOF' > /mnt/etc/initcpio/hooks/Quasar-branding 
-run_hook() {
-    echo "Welcom to QuasarLinux-BETA"
-}
-EOF
 
-cp /mnt/etc/initcpio/hooks/Quasar-branding  /usr/lib/initcpio/hooks/
-
-sed -i '/^HOOKS=/ s/)/ Quasar-branding)/' /mnt/etc/mkinitcpio.conf
 
 cat << 'EOF' >> /mnt/home/$USERNAME/.bashrc
 if [ ! -f ~/.Quasar_post_done ]; then
@@ -378,8 +390,6 @@ if [ ! -f ~/.Quasar_post_done ]; then
     touch ~/.Quasar_post_done
 fi
 EOF
-
-
 
 
 
