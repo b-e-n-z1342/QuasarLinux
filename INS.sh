@@ -344,8 +344,7 @@ UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
 
 # Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id="Quasar Linux" --removable --recheck
+  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
 else
   grub-install --target=i386-pc "$DISK" --recheck
 fi
@@ -410,11 +409,10 @@ echo "- Загрузчик GRUB настроен и работает"
 echo "- Базовая система с консольными утилитами"
 echo "- Сетевые настройки (NetworkManager)"
 echo "- Пользователь: $USERNAME"
-echo "- Совместимость systemctl команд"
 echo "СЛЕДУЮЩИЕ ШАГИ:"
 echo "1. Перезагрузите систему: reboot"
 echo "2. Войдите как пользователь: $USERNAME"
-echo "3. Запустите: ./INSTALL.sh"
+echo "3. автоматом запустится пост установка"
 echo "4. Установите KDE Plasma и приложения"
 echo "ВНИМАНИЕ: Не забудьте извлечь установочный носитель!"
 echo "Добро пожаловать в Quasar Linux! 🚀"
