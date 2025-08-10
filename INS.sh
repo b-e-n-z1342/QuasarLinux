@@ -357,7 +357,7 @@ EOF
 
 chmod +x /mnt/install-grub.sh
 
-artix-chroot /mnt /install-grub.sh 2>&1 | tee /grub-install.log
+artix-chroot /mnt bash /install-grub.sh 2>&1 | tee /grub-install.log
 
 echo "========================================================================================================================="
 cp INSTALL.sh /mnt/home/$USERNAME/
@@ -398,7 +398,7 @@ artix-chroot /mnt mkinitcpio -P
 # Размонтирование
 echo "Размонтирование разделов..."
 umount -R /mnt 2>/dev/null || true
-swapoff $SWAP_PART 2>/dev/null || true
+[ -n "${SWAP_PART+x}" ] && swapoff "$SWAP_PART" 2>/dev/null
 
 echo "=========================================="
 echo "      УСТАНОВКА QUASAR LINUX ЗАВЕРШЕНА!"
