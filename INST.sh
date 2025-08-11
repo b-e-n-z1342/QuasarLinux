@@ -141,7 +141,13 @@ sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
 sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
+clear 
+sleep 2
+echo "Чистка кэша"
 sudo pacman -Scc --noconfirm
+sudo rm -rf /tmp/*
+sudo rm -rf /var/tmp/*
+
 clear
 
 echo "Установка завершена! Перезагрузка через 5 секунд..."
