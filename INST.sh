@@ -137,7 +137,28 @@ sudo rc-update add pipewire-pulse default
 
 sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
-
+# Проверка и ребрейдинг OS-release
+if [ ! -f /etc/os-release ] || ! grep -q 'QuasarLinux' /etc/os-release; then
+    echo "Выполняется ребрейдинг системы в QuasarLinux..."
+    
+    # Создаем новый файл os-release
+    cat << 'EOF' > /etc/os-release
+NAME="QuasarLinux"
+PRETTY_NAME="Quasar Linux (Artix base)"
+ID=QuasarLinux
+ID_LIKE=artix
+ANSI_COLOR="0;36"
+HOME_URL="https://b-e-n-z1342.github.io"
+SUPPORT_URL="#"
+BUG_REPORT_URL="#"
+EOF
+    
+        
+    echo "DISTRIB_ID=QuasarLinux" > /etc/lsb-release
+    echo "DISTRIB_DESCRIPTION=\"Quasar Linux\"" >> /etc/lsb-release
+    echo "Quasar Linux \\r (\\l)" > /etc/issue
+    echo "Quasar Linux" > /etc/issue.net
+fi
 
 sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
