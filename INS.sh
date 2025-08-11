@@ -329,20 +329,25 @@ cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
 set -eux
 echo "Установка загрузчика"
+ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
+if [ -z "$ROOT_PART" ]; then
+    echo "Ошибка: не удалось определить корневой раздел!" >&2
+    exit 1
+fi
 
 # Определяем режим загрузки
 UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
 
 # Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
-    pacman -Sy grub os-prober efibootmgr
+    pacman -Sy grub os-prober efibootmgr --noconfirm
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
     sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 else
-    pacman -Sy syslinux
+    pacman -Sy syslinux --noconfirm
     sudo extlinux --install /boot
-    dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/vda bs=440 count=1 conv=notrunc
+    dd if=/usr/lib/syslinux/bios/mbr.bin of=$ROOT_DISK bs=440 count=1 conv=notrunc
     mkdir /boot/syslinux
     cat << EOFD >> /boot/syslinux/syslinux.cfg
 DEFAULT Quasarlinux
@@ -351,7 +356,7 @@ TIMEOUT 50
 
 LABEL Quasarlinux
     KERNEL /vmlinuz-linux-zen
-    APPEND root=${ROOT_PART} rw
+    APPEND root=$ROOT_PART rw
     INITRD /initramfs-linux-zen.img
 EOFD
     
