@@ -114,7 +114,7 @@ else
         mkfs.fat -F32 $BOOT_PART
     else
         echo "Форматирование BOOT: $BOOT_PART"
-        mkfs.fat -F32 $BOOT_PART
+        mkfs.ext2 -F $BOOT_PART
     fi
 
     echo "Форматирование ROOT: $ROOT_PART"
@@ -160,7 +160,7 @@ clear
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano grub os-prober efibootmgr dhcpcd mc htop wget curl git terminus-font pciutils 
+basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano  dhcpcd mc htop wget curl git terminus-font pciutils 
 
 # Копирование дополнительных файлов
 [ -d /mnt/usr/share/pixmap ] && rm -r /mnt/usr/share/pixmap
@@ -186,17 +186,6 @@ sed -i '/^HOOKS=/ s/)/ quasar-branding)/' /mnt/etc/mkinitcpio.conf
 
 
 cp /etc/issue /mnt/etc/
-
-
-
-
-
-
-
-
-
-
-
 
 # Настройка fstab
 mount --types proc /proc /mnt/proc
@@ -302,7 +291,8 @@ clear
 
 sleep 5
 # Детекция и установка драйверов GPU
-echo "Определение видеокарты..."
+echo "Определение виsudo extlinux --install /boot
+деокарты..."
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
@@ -338,27 +328,41 @@ echo "==========================================================================
 cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
 set -eux
+echo "Установка загрузчика"
 
 # Определяем режим загрузки
 UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
 
 # Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
+    pacman -Sy grub os-prober efibootmgr
+    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
+    sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
 else
-  grub-install --target=i386-pc "$DISK" --recheck
-fi
+    pacman -Sy syslinux
+    sudo extlinux --install /boot
+    dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/vda bs=440 count=1 conv=notrunc
+    mkdir /boot/syslinux
+    cat << EOFD >> /boot/syslinux/syslinux.cfg
+DEFAULT Quasarlinux
+PROMPT 0
+TIMEOUT 50
 
-# Конфигурируем
-sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub \
-  || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg
+LABEL Quasarlinux
+    KERNEL /vmlinuz-linux-zen
+    APPEND root=${ROOT_PART} rw
+    INITRD /initramfs-linux-zen.img
+EOFD
+    
+fi
 EOF
 
 chmod +x /mnt/install-grub.sh
 
 artix-chroot /mnt bash /install-grub.sh 2>&1 | tee /grub-install.log
-
+sleep 5
+clear
 echo "========================================================================================================================="
 cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
