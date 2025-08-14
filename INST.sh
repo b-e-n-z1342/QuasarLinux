@@ -61,7 +61,7 @@ read -p "Начать установку Waydroid? (y/N): " waydroid
 if [[ "$waydroid" =~ ^[Yy]$ ]]; then
     yay -S waydroid --noconfirm
     waydroid init
-    cat << 'EOF' > /etc/init.d/waydroid
+    sudo cat << 'EOF' > /etc/init.d/waydroid
 #!/sbin/openrc-run
 # Waydroid 
 
@@ -76,8 +76,8 @@ depend() {
     use net
 }
 EOF
-    chmod +x /etc/init.d/waydroid
-    rc-update add waydroid default
+    sudo chmod +x /etc/init.d/waydroid
+    sudo rc-update add waydroid default
 fi
 clear
 
@@ -150,11 +150,13 @@ BUG_REPORT_URL="#"
 EOF
     
         
-    echo "DISTRIB_ID=QuasarLinux" > /etc/lsb-release
-    echo "DISTRIB_DESCRIPTION=\"Quasar Linux\"" >> /etc/lsb-release
-    echo "Quasar Linux \\r (\\l)" > /etc/issue
-    echo "Quasar Linux" > /etc/issue.net
-fi
+sudo cat > /etc/lsb-release << 'LSB_EOF'
+DISTRIB_ID=Quasar
+DISTRIB_RELEASE=1.0
+DISTRIB_DESCRIPTION="Quasar Linux"
+DISTRIB_CODENAME=rolling
+LSB_EOF
+
 
 sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
