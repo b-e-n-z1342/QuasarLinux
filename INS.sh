@@ -181,7 +181,7 @@ HOSTS_EOF
 pacman -S networkmanager networkmanager-openrc
 
 # Полный ребрендинг системы
-cat > /etc/os-release << 'OS_EOF'
+cat > /usr/lib/os-release << 'OS_EOF'
 NAME="Quasar Linux"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=quasar
