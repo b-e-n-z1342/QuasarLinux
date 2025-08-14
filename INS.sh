@@ -327,9 +327,10 @@ clear
 echo "==========================================================================================================================="
 cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
+
 set -eux
 echo "Установка загрузчика"
-ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
+
 if [ -z "$ROOT_PART" ]; then
     echo "Ошибка: не удалось определить корневой раздел!" >&2
     exit 1
@@ -345,18 +346,23 @@ if [ "$UEFI_MODE" -eq 1 ]; then
     sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 else
+    ROOT_PART=$(findmnt -n -o SOURCE /)
+    ROOT_DISK=$(lsblk -no PKNAME "$ROOT_PART")
+    ROOT_DISK="/dev/$ROOT_DISK"
+    ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
+    ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
     pacman -Sy syslinux --noconfirm
-    sudo extlinux --install /boot
-    dd if=/usr/lib/syslinux/bios/mbr.bin of=$ROOT_DISK bs=440 count=1 conv=notrunc
+    extlinux --install /boot
+    dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
     mkdir /boot/syslinux
-    cat << EOFD >> /boot/syslinux/syslinux.cfg
+    cat > /boot/syslinux/syslinux.cfg <<EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
 
 LABEL Quasarlinux
     KERNEL /vmlinuz-linux-zen
-    APPEND root=$ROOT_PART rw
+    APPEND root=UUID=$ROOT_UUID rw
     INITRD /initramfs-linux-zen.img
 EOFD
     
@@ -366,7 +372,7 @@ EOF
 chmod +x /mnt/install-grub.sh
 
 artix-chroot /mnt bash /install-grub.sh 2>&1 | tee /grub-install.log
-sleep 5
+sleep 2
 clear
 echo "========================================================================================================================="
 cp INSTALL.sh /mnt/home/$USERNAME/
