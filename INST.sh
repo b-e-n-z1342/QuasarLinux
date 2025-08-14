@@ -56,16 +56,14 @@ cd yay-bin
 makepkg -si --noconfirm
 clear
 echo "Активировация   Waydroid"
+echo "Waydroid позволяет запускать android приложения в QuasarLinux
 read -p "Начать установку Waydroid? (y/N): " waydroid
 if [[ "$waydroid" =~ ^[Yy]$ ]]; then
     yay -S waydroid --noconfirm
     waydroid init
-
-    mkdir -p /etc/sv/waydroid
-
     cat << 'EOF' > /etc/init.d/waydroid
 #!/sbin/openrc-run
-# Waydroid контейнер
+# Waydroid 
 
 description="Запуск Waydroid-контейнера"
 command=/usr/bin/waydroid
