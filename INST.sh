@@ -136,11 +136,9 @@ sudo rc-update add pipewire-pulse default
 sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
 # Проверка и ребрейдинг OS-release
-if [ ! -f /etc/os-release ] || ! grep -q 'QuasarLinux' /etc/os-release; then
-    echo "Выполняется ребрейдинг системы в QuasarLinux..."
-    
-    # Создаем новый файл os-release
-    cat << 'EOF' > /etc/os-release
+
+
+sudo cat << 'EOF' > /etc/os-release
 NAME="QuasarLinux"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=QuasarLinux
@@ -171,6 +169,6 @@ clear
 
 echo "Установка завершена! Перезагрузка через 5 секунд..."
 sleep 5
-reboot
+sudo reboot
 
 
