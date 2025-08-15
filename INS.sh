@@ -111,12 +111,34 @@ run_hook() {
     echo "Welcom to QuasarLinux-BETA" > /etc/issue
 }
 EOF
-
+chmod +x /mnt/etc/initcpio/hooks/quasar-branding
 cp /mnt/etc/initcpio/hooks/quasar-branding  /usr/lib/initcpio/hooks/
-
+chmod +x /mnt/usr/lib/initcpio/hooks/quasar-branding
 sed -i '/^HOOKS=/ s/)/ quasar-branding)/' /mnt/etc/mkinitcpio.conf
 
 
+cat << 'EOF' > /mnt/usr/lib/initcpio/install/quasar-branding
+#!/bin/bash
+hook_name="quasar-branding"
+
+run_hook() {
+    echo "Welcome to QuasarLinux-BETA"
+}
+
+build() {
+    add_hook "$hook_name" run_hook
+}
+
+help() {
+    cat <<-HELPEOF
+This hook prints a welcome message for QuasarLinux-BETA.
+HELPEOF
+}
+EOF
+
+
+
+chmod +x /mnt/usr/lib/initcpio/install/quasar-branding
 
 cp /etc/issue /mnt/etc/
 
@@ -133,24 +155,25 @@ fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 clear
 # Создание пользователя
-echo "================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
 read -p "Введите имя нового пользователя: " USERNAME
 artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
 artix-chroot /mnt passwd $USERNAME
 clear
-echo "================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
 artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
 mkdir -p /mnt/home/$USERNAME
-echo "================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
 clear
 
 
 # Chroot-секция настройки ============================================================================================================================================================================
 
 
-echo "========================================================================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
+
 echo "Переход в chroot-окружение..."
 sleep 2
 artix-chroot /mnt /bin/bash << EOF
@@ -257,7 +280,7 @@ rc-update add acpid default
 EOF
 sleep 5
 clear
-echo "==========================================================================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
 cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
 
@@ -300,7 +323,7 @@ chmod +x /mnt/install-grub.sh
 artix-chroot /mnt bash /install-grub.sh 2>&1 | tee /grub-install.log
 sleep 2
 clear
-echo "========================================================================================================================="
+printf '=%.0s' $(seq 1 $COLUMNS)
 cp INSTALL.sh /mnt/home/$USERNAME/
 cp INST.sh /mnt/home/$USERNAME/
 
