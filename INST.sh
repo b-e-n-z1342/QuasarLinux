@@ -37,19 +37,16 @@ clear
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 
-clear
-sleep 1
 echo "Настройка Wine"
-wineboot --init
-
-sleep 2
-
-clear
-
-winetricks --force -q --unattended corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
-
-sleep 5
-clear
+read -p "Начать установку Wine?  (y/N): " wine             # для vm Ё
+if [[ "$wine" =~ ^[Yy]$ ]]; then
+    wineboot --init
+    sleep 2
+    clear
+    winetricks --force -q --unattended corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
+    sleep 5
+    clear
+fi
 
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
@@ -145,8 +142,6 @@ ID=QuasarLinux
 ID_LIKE=artix
 ANSI_COLOR="0;36"
 HOME_URL="https://b-e-n-z1342.github.io"
-SUPPORT_URL="#"
-BUG_REPORT_URL="#"
 EOF
     
         
