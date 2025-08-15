@@ -247,8 +247,7 @@ clear
 
 sleep 5
 # Детекция и установка драйверов GPU
-echo "Определение виsudo extlinux --install /boot
-деокарты..."
+echo "Определение видеокарты..."
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
@@ -284,9 +283,9 @@ printf '=%.0s' $(seq 1 $COLUMNS)
 cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
 
-set -eux
-# Определяем режим загрузки
-UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
+UEFI_MODE=0
+
+[ -d /sys/firmware/efi ] && UEFI_MODE=1
 
 # Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
