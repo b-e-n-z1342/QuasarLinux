@@ -259,13 +259,6 @@ cat > /mnt/install-grub.sh << 'EOF'
 #!/bin/bash
 
 set -eux
-echo "Установка загрузчика"
-
-if [ -z "$ROOT_PART" ]; then
-    echo "Ошибка: не удалось определить корневой раздел!" >&2
-    exit 1
-fi
-
 # Определяем режим загрузки
 UEFI_MODE=\[ -d /sys/firmware/efi ] && echo 1 || echo 0
 
@@ -285,7 +278,7 @@ else
     extlinux --install /boot
     dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
     mkdir /boot/syslinux
-    cat > /boot/syslinux/syslinux.cfg <<EOFD
+    cat > /boot/syslinux/syslinux.cfg << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
