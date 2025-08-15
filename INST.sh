@@ -142,7 +142,10 @@ ID_LIKE=artix
 ANSI_COLOR="0;36"
 HOME_URL="https://b-e-n-z1342.github.io"
 EOF
-    
+sudo rm /etc/artix-release
+sudo cat > /etc/quasar-release << EOF
+
+EOF
         
 sudo cat > /etc/lsb-release << 'LSB_EOF'
 DISTRIB_ID=Quasar
