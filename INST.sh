@@ -36,9 +36,10 @@ clear
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-
+printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Настройка Wine"
-read -p "Начать установку Wine?  (y/N): " wine             # для vm Ё
+echo "Wine -- не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
+read -p "Начать установку Wine?  (y/N): " wine      
 if [[ "$wine" =~ ^[Yy]$ ]]; then
     wineboot --init
     sleep 2
@@ -96,11 +97,10 @@ echo "Активация SDDM..."
 sudo rc-update add sddm  default
 sudo usermod -aG elogind $(whoami)
 clear
+printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Настройка звука..."
 sudo pacman -Rdd --noconfirm jack2  
-
-sleep 5
-
+sleep 1
 sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 sleep 5
 
@@ -132,11 +132,10 @@ sudo rc-update add pipewire-pulse default
 
 sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
-# Проверка и ребрейдинг OS-release
-
 
 sudo cat << 'EOF' > /etc/os-release
 NAME="QuasarLinux"
+VERSION="0.2-BETA"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=QuasarLinux
 ID_LIKE=artix
@@ -147,12 +146,12 @@ EOF
         
 sudo cat > /etc/lsb-release << 'LSB_EOF'
 DISTRIB_ID=Quasar
-DISTRIB_RELEASE=1.0
+DISTRIB_RELEASE=0.3
 DISTRIB_DESCRIPTION="Quasar Linux"
 DISTRIB_CODENAME=rolling
 LSB_EOF
 
-
+printf '=%.0s' $(seq 1 $COLUMNS)
 sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
 clear 
@@ -163,7 +162,7 @@ sudo rm -rf /tmp/*
 sudo rm -rf /var/tmp/*
 
 clear
-
+printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Установка завершена! Перезагрузка через 5 секунд..."
 sleep 5
 sudo reboot
