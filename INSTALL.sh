@@ -1,6 +1,7 @@
 #!/bin/bash
 setfont ter-v20n
 clear
+printf '=%.0s' $(seq 1 $COLUMNS)
 # Функция для настройки DNS
 configure_dns() {
     echo "Выберите DNS сервер:"
