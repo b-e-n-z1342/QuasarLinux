@@ -93,11 +93,14 @@ echo "Установка базовой системы..."
 basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano  dhcpcd mc htop wget curl git terminus-font pciutils 
 
 # Копирование дополнительных файлов
-[ -d /mnt/usr/share/pixmap ] && rm -r /mnt/usr/share/pixmap
+[ -d /mnt/usr/share/pixmaps ] && rm -r /mnt/usr/share/pixmaps
 
 sleep 1
 cp -r pixmap /mnt/usr/share/
-
+cd /mnt/usr/share/
+mv pixmap pixmaps
+cd 
+sleep 1 
 cat << 'EOFRC' > /mnt/etc/sysctl.d/99-quasar.conf
 kernel.hostname = QuasarLinux
 EOFRC
