@@ -167,8 +167,13 @@ artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USER
 mkdir -p /mnt/home/$USERNAME
 printf '=%.0s' $(seq 1 $COLUMNS)
 clear
-
-
+artix-chroot /mnt /bin/bash << EOD
+ROOT_PART=$(findmnt -n -o SOURCE /)
+ROOT_DISK=$(lsblk -no PKNAME "$ROOT_PART")
+ROOT_DISK="/dev/$ROOT_DISK"
+ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
+ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
+EOD
 # Chroot-секция настройки ============================================================================================================================================================================
 
 
@@ -257,6 +262,7 @@ elif echo "\$gpu_info" | grep -qi "Intel"; then
     pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver linux-firmware-intel
 elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
+    echo "NVIDIA драйвера могут буть не стабильны"
     pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils linux-firmware-nvidia
 else
     echo "Видеокарта не определена, устанавливаю базовые драйверы"
@@ -280,25 +286,13 @@ EOF
 sleep 5
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
-cat > /mnt/install-grub.sh << 'EOF'
-#!/bin/bash
 
-UEFI_MODE=0
-
-[ -d /sys/firmware/efi ] && UEFI_MODE=1
-
-# Ставим GRUB
 if [ "$UEFI_MODE" -eq 1 ]; then
     pacman -Sy grub os-prober efibootmgr --noconfirm
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
     sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 else
-    ROOT_PART=$(findmnt -n -o SOURCE /)
-    ROOT_DISK=$(lsblk -no PKNAME "$ROOT_PART")
-    ROOT_DISK="/dev/$ROOT_DISK"
-    ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
-    ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
     pacman -Sy syslinux --noconfirm
     extlinux --install /boot
     dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
@@ -315,7 +309,7 @@ LABEL Quasarlinux
 EOFD
     
 fi
-EOF
+
 
 chmod +x /mnt/install-grub.sh
 
