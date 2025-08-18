@@ -159,6 +159,7 @@ sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
 clear 
 sleep 2
+printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Чистка кэша"
 sudo pacman -Scc --noconfirm
 sudo rm -rf /tmp/*
