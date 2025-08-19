@@ -32,10 +32,10 @@ fi
 
 # Ручная разметка только через cfdisk
 echo "Запускаю cfdisk для ручной разметки $DISK..."
-cfdisk $DISK
+cfdisk "$DISK"
 
 echo "=== РАЗДЕЛЫ НА ДИСКЕ ==="
-fdisk -l $DISK | grep "^/dev"
+fdisk -l "$DISK" | grep "^/dev"
 echo "======================="
 
 # Выбор раздела под корень /
@@ -175,13 +175,14 @@ ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
 ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
 EOD
 # Chroot-секция настройки ============================================================================================================================================================================
-
-
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+mount --bind /etc/resolv.conf /mnt/etc/resolv.conf
 printf '=%.0s' $(seq 1 $COLUMNS)
 
 echo "Переход в chroot-окружение..."
 sleep 2
-artix-chroot /mnt /bin/bash << EOF
+chroot /mnt /bin/bash << EOF
 
 # Права доступа
 chmod 600 /etc/{shadow,gshadow}
@@ -243,7 +244,7 @@ echo "Welcome to Quasar Linux!" > /etc/motd
 
 # Симлинк для совместимости
 ln -sf /etc/os-release /usr/lib/os-release 2>/dev/null || true
-
+chattr +i /usr/lib/os-release /etc/lsb-release 2>/dev/null || true
 # Передача переменных в chroot
 export UEFI_MODE=$UEFI_MODE
 export DISK=$DISK
