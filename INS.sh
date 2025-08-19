@@ -352,6 +352,12 @@ EOF
 
 
 artix-chroot /mnt mkinitcpio -P
+sleep 2
+umount /mnt/etc/resolv.conf
+umount /mnt/proc
+umount /mnt/sys
+umount /mnt/dev
+umount /mnt/run
 
 # Размонтирование
 echo "Размонтирование разделов..."
