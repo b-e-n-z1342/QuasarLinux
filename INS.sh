@@ -287,14 +287,15 @@ EOF
 sleep 5
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
-
+artix-chroot /mnt pacman -Syy
+artix-chroot /mnt /bin/bash << EOF
 if [ "$UEFI_MODE" -eq 1 ]; then
-    pacman -Sy grub os-prober efibootmgr --noconfirm
+    pacman -S grub os-prober efibootmgr --noconfirm
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
     sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg
 else
-    pacman -Sy syslinux --noconfirm
+    pacman -S syslinux --noconfirm
     extlinux --install /boot
     dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
     mkdir /boot/syslinux
@@ -310,7 +311,7 @@ LABEL Quasarlinux
 EOFD
     
 fi
-
+EOF
 
 chmod +x /mnt/install-grub.sh
 
