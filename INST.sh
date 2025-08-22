@@ -21,7 +21,7 @@ echo "установка Plasma"
 sudo pacman -Syy
 
 
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 wine-staging winetricks qt6-tools qt5-tools kcalc gwenview kate vlc konsole mesa vulkan-tools gamemode lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak 
+sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 qt5 kcalc gwenview kate vlc konsole mesa vulkan-tools lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak 
 sleep 2
 
 sudo rc-update add seatd default
@@ -41,6 +41,7 @@ echo "Настройка Wine"
 echo "Wine -- не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
 read -p "Начать установку Wine?  (y/N): " wine      
 if [[ "$wine" =~ ^[Yy]$ ]]; then
+    sudo pacman -S wine-staging winetricks wine-gecko gamemode --noconfirm
     wineboot --init
     sleep 2
     clear
@@ -57,6 +58,7 @@ echo "Активировация   Waydroid"
 echo "Waydroid позволяет запускать android приложения в QuasarLinux"
 read -p "Начать установку Waydroid? (y/N): " waydroid
 if [[ "$waydroid" =~ ^[Yy]$ ]]; then
+    sudo pacman -S python --noconfirm
     yay -S waydroid --noconfirm
     waydroid init
     sudo cat << 'EOF' > /etc/init.d/waydroid
