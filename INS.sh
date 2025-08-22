@@ -118,7 +118,7 @@ chroot_system() {
 # Функция для установки системы
 install_system() {
     print_message "Запуск установки QuasarLinux..."
-    bash INSTALLING.sh
+    bash ~/QuasarLinux/INSTALLING.sh
 }
 
 # Запуск основной функции
