@@ -297,22 +297,16 @@ EOFD
     
 fi
 EOF
-
-chmod +x /mnt/install-grub.sh
-
-artix-chroot /mnt bash /install-grub.sh 2>&1 | tee /grub-install.log
 sleep 2
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
-cp INSTALL.sh /mnt/home/$USERNAME/
-cp INST.sh /mnt/home/$USERNAME/
+cp ~/QuasarLinux/INSTALL.sh /mnt/home/$USERNAME/
+cp ~/QuasaarLinux/INST.sh /mnt/home/$USERNAME/
 
 
 
 chmod +x /mnt/home/$USERNAME/INST.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INST.sh
-cp INSTALL.sh /mnt/home/$USERNAME/
-
 chmod +x /mnt/home/$USERNAME/INSTALL.sh
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/INSTALL.sh
 
