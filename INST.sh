@@ -14,16 +14,50 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     echo "Отмена установки"
     exit 0
 fi
-
-
-
-echo "установка Plasma"
+#сновные пакеты 
 sudo pacman -Syy
-
-
-sudo pacman -S --noconfirm plasma seatd go sddm sddm-openrc dolphin qt6 qt5 kcalc gwenview kate vlc konsole mesa vulkan-tools lib32-gamemode lib32-alsa-plugins  lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak 
-sleep 2
-
+sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
+# установка DE
+function hypr() {
+    sudo pacman -S hyprland waybar rofi kitty ly 
+    sudo rc-update add ly default
+}
+function plasma() {
+    sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc qt6 qt5
+    sleep 1
+    sudo pacman -Rns discover
+    
+    echo "Настройка SDDM..."
+    sudo groupadd -f sddm
+    sudo useradd -r -g sddm -s /usr/bin/nologin -d /var/lib/sddm sddm 2>/dev/null || true
+    sudo mkdir -p /var/lib/sddm /var/run/sddm
+    sudo chown sddm:sddm /var/lib/sddm /var/run/sddm
+    sudo chmod 0755 /var/lib/sddm /var/run/sddm
+    sudo usermod -aG seat,video,input sddm
+    sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
+    sudo rc-update sddm default
+}
+function mous() {
+    sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings
+    systemctl enable lightdm
+}
+echo "Выберите DE/WM"
+echo "1) hyprland"
+echo "2) KDE plasma"
+echo "3) xfce4"
+read -p "введите номер (1-3): " de
+case $de in
+    1) hypr ;;
+    2) plasma ;;
+    3) mous ;;
+    *) echo "неверный выбор" ;;
+exac
+echo "поставить QT/GTK?"
+read -p "GO? [Y/n]: " qt
+if [[ ! "$qt" =~ ^[Yy]$ ]]; then
+    sudo pacman -S --noconfirm  qt6 qt5 gtk2 gtk3 gtk4
+    sleep 2
+fi
 sudo rc-update add seatd default
 
 
@@ -33,7 +67,7 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
 fi
 EOF
 clear
-
+flatpak install flathub -y
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 printf '=%.0s' $(seq 1 $COLUMNS)
@@ -81,22 +115,7 @@ EOF
 fi
 clear
 
-echo "Настройка SDDM..."
-sudo groupadd -f sddm
-sudo useradd -r -g sddm -s /usr/bin/nologin -d /var/lib/sddm sddm 2>/dev/null || true
-sudo mkdir -p /var/lib/sddm /var/run/sddm
-sudo chown sddm:sddm /var/lib/sddm /var/run/sddm
-sudo chmod 0755 /var/lib/sddm /var/run/sddm
-sudo usermod -aG seat,video,input sddm
-
-
-
-
-
-
-# Активация SDDM
-echo "Активация SDDM..."
-sudo rc-update add sddm  default
+# Активация 
 sudo usermod -aG elogind $(whoami)
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
@@ -112,9 +131,6 @@ sleep 2
 
 sudo chmod +x /etc/init.d/pipewire
 sudo rc-update add pipewire default
-
-echo "Настройка темы и локализации..."
-sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
 
 echo "Финальная настройка системы..."
 # Добавляем пользователя в нужные группы
