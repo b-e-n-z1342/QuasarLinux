@@ -19,7 +19,7 @@ sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
 # установка DE
 function hypr() {
-    sudo pacman -S hyprland waybar rofi kitty ly 
+    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils hyprwatland-scanner xdg-desktop-portal-hyprland
     sudo rc-update add ly default
 }
 function plasma() {
@@ -52,12 +52,16 @@ case $de in
     3) mous ;;
     *) echo "неверный выбор" ;;
 exac
-echo "поставить QT/GTK?"
-read -p "GO? [Y/n]: " qt
-if [[ ! "$qt" =~ ^[Yy]$ ]]; then
-    sudo pacman -S --noconfirm  qt6 qt5 gtk2 gtk3 gtk4
-    sleep 2
-fi
+read -p "Вы хотите установить QT/GTK? (Y/n): " answer
+case ${answer:0:1} in
+    y|Y|"")
+        sudo pacman -Sy
+        sudo pacman -S qt6 qt5 gtk2 gtk3 gtk4
+    ;;
+    *)
+        echo "OK"    
+    ;;
+esac
 sudo rc-update add seatd default
 
 
@@ -182,6 +186,16 @@ echo "Чистка кэша"
 sudo pacman -Scc --noconfirm
 sudo rm -rf /tmp/*
 sudo rm -rf /var/tmp/*
+
+sudo tee /etc/os-release << EOF
+NAME="QuasarLinux"
+VERSION="0.2-BETA"
+PRETTY_NAME="Quasar Linux (Artix base)"
+ID=QuasarLinux
+ID_LIKE=artix
+ANSI_COLOR="0;36"
+HOME_URL="https://b-e-n-z1342.github.io"
+EOF
 
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
