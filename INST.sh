@@ -14,6 +14,7 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     echo "Отмена установки"
     exit 0
 fi
+mkdir ~/.apps
 #сновные пакеты 
 sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
@@ -77,16 +78,67 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
 printf '=%.0s' $(seq 1 $COLUMNS)
 echo "Настройка Wine"
 echo "Wine -- не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
-read -p "Начать установку Wine?  (y/N): " wine      
-if [[ "$wine" =~ ^[Yy]$ ]]; then
+echo "но у него есть куча версий! какую ставить ?"
+#!/bin/bash
+
+function wine() {
+    sudo pacman -S wine wine-gecko winetricks
+}
+
+function staging() {
+    sudo pacman -S wine-staging wine-gecko winetricks
+}
+
+function quasar() {
     sudo pacman -S wine-staging winetricks wine-gecko gamemode --noconfirm
     wineboot --init
     sleep 2
     clear
-    winetricks --force -q --unattended corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20 riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
+    winetricks --force -q --unattended corefonts tahoma cjkfonts vcrun6 vcrun2003 vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2015 vcrun2019 vcrun2022 dotnet20 dotnet30 dotnet35 dotnet40 dotnet45 dotnet462 dotnet48 dotnetcoredesktop3 dotnetcoredesktop6 d3dcompiler_43 
+    winetricks --force -q --unattended d3dcompiler_47 d3dx9 d3dx10 d3dx11_43 directx9 directx10 directx11 xact xinput quartz devenum wmp9 wmp10 wmp11 msxml3 msxml4 msxml6 gdiplus riched20
+    winetricks --force -q --unattended riched30 vb6run mfc40 mfc42 mfc70 mfc80 mfc90 mfc100 mfc110 mfc140 ie8 flash silverlight physx openal dsound xna40 faudio dxvk vkd3d dgvoodoo2 win10
     sleep 5
     clear
-fi
+}
+
+function ge() {
+    sudo wget -P /tmp https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton8-26/wine-lutris-GE-Proton8-26-x86_64.tar.xz
+    sudo tar -xf /tmp/wine-lutris-GE-Proton8-26-x86_64.tar.xz -C ~/.apps
+    cd ~/.apps
+    mv wine-lutris-GE-Proton8-26-x86_64 wine-ge
+    sudo ln -sf ~/.apps/wine-ge/bin/wine /usr/local/bin/wine
+    sudo ln -sf ~/.apps/wine-ge/bin/winecfg /usr/local/bin/winecfg
+    sudo ln -sf ~/.apps/wine-ge/bin/wineserver /usr/local/bin/wineserver
+}
+
+function proton() {
+    wget -P /tmp https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton10-13/GE-Proton10-13.tar.gz
+    sudo tar -xf /tmp/GE-Proton10-13/GE-Proton10-13.tar.gz -C ~/.apps
+    sudo mv GE-Proton10-13/GE-Proton10-13 proton-ge
+    clear
+    echo "Proton требует ручной настройки"
+}
+function no() {
+    echo "OK"
+}
+echo "Выберите вариант:"
+echo "1) обычный wine"
+echo "2) wine-staging"
+echo "3) wine-staging настроенный для QuasarLinux"
+echo "4) wine-ge"
+echo "5) proton-ge"
+echo "6) без wine"
+read -p "Введите номер (1-6): " choice
+
+case $choice in
+    1) wine ;;
+    2) staging ;;
+    3) quasar ;;
+    4) ge ;;
+    5) proton ;;
+    6) no ;;
+    *) echo "Неверный выбор" ;;
+esac
 
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
