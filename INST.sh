@@ -52,7 +52,7 @@ case $de in
     2) plasma ;;
     3) mous ;;
     *) echo "неверный выбор" ;;
-exac
+esac
 read -p "Вы хотите установить QT/GTK? (Y/n): " answer
 case ${answer:0:1} in
     y|Y|"")
