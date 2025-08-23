@@ -19,6 +19,8 @@ mkdir ~/.apps
 sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
 # установка DE
+printf '=%.0s' $(seq 1 $(tput cols))
+echo "Выберите DE или WM."
 function hypr() {
     sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils hyprwayland-scanner xdg-desktop-portal-hyprland
     sudo rc-update add ly default
@@ -53,11 +55,13 @@ case $de in
     3) mous ;;
     *) echo "неверный выбор" ;;
 esac
+clear
+printf '=%.0s' $(seq 1 $(tput cols))
 read -p "Вы хотите установить QT/GTK? (Y/n): " answer
 case ${answer:0:1} in
     y|Y|"")
         sudo pacman -Sy
-        sudo pacman -S qt6 qt5 gtk2 gtk3 gtk4
+        sudo pacman -S qt6 qt5 gtk2 gtk3 gtk4 --noconfirm
     ;;
     *)
         echo "OK"    
@@ -75,18 +79,17 @@ clear
 flatpak install flathub -y
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка Wine"
-echo "Wine -- не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
+echo "Wine -- это не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
 echo "но у него есть куча версий! какую ставить ?"
-#!/bin/bash
 
 function wine() {
-    sudo pacman -S wine wine-gecko winetricks
+    sudo pacman -S wine wine-gecko winetricks  --noconfirm
 }
 
 function staging() {
-    sudo pacman -S wine-staging wine-gecko winetricks
+    sudo pacman -S wine-staging wine-gecko winetricks  --noconfirm
 }
 
 function quasar() {
@@ -139,11 +142,12 @@ case $choice in
     6) no ;;
     *) echo "Неверный выбор" ;;
 esac
-
+clear
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
 clear
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "Активировация   Waydroid"
 echo "Waydroid позволяет запускать android приложения в QuasarLinux"
 read -p "Начать установку Waydroid? (y/N): " waydroid
@@ -170,11 +174,46 @@ EOF
     sudo rc-update add waydroid default
 fi
 clear
+printf '=%.0s' $(seq 1 $(tput cols))
+echo "QuasarLinux имеет фишку которая является основной!"
+echo "это -- блокировка телеметрии"
+echo "около 60-80% системы без телеметрии, к релизу будет 90-99%"
+echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
+
+sleep 5
+
+sudo tee /etc/host << 'EOF'
+0.0.0.0 vortex.data.microsoft.com
+0.0.0.0 settings-win.data.microsoft.com
+0.0.0.0 telemetry.microsoft.com
+0.0.0.0 watson.telemetry.microsoft.com
+0.0.0.0 clients2.google.com
+0.0.0.0 clients4.google.com
+0.0.0.0 update.googleapis.com
+0.0.0.0 dl.google.com
+0.0.0.0 incoming.telemetry.mozilla.org
+0.0.0.0 detectportal.firefox.com
+0.0.0.0 location.services.mozilla.com
+0.0.0.0 shavar.services.mozilla.com
+0.0.0.0 telemetry.winehq.org
+0.0.0.0 cdn.winehq.org
+0.0.0.0 staging.winehq.org
+0.0.0.0 telemetry.yandex.ru
+0.0.0.0 clck.yandex.ru
+0.0.0.0 yabs.yandex.ru
+0.0.0.0 mc.yandex.ru
+0.0.0.0 dsp.yandex.ru
+EOF
+echo "блокитровка завершена! все эти домены можно востановить если поставить перед ними : # : всё заблокированное находится в /etc/host."
+
+
+
+
 
 # Активация 
 sudo usermod -aG elogind $(whoami)
 clear
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка звука..."
 sudo pacman -Rdd --noconfirm jack2  
 sleep 1
@@ -182,7 +221,7 @@ sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire 
 sleep 5
 
 clear
-
+printf '=%.0s' $(seq 1 $(tput cols))
 sleep 2
 
 sudo chmod +x /etc/init.d/pipewire
@@ -228,12 +267,12 @@ DISTRIB_DESCRIPTION="Quasar Linux"
 DISTRIB_CODENAME=rolling
 LSB_EOF
 
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 sudo chmod +x /etc/local.d/fixing.start
 sudo rc-update add local default
 clear 
 sleep 2
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "Чистка кэша"
 sudo pacman -Scc --noconfirm
 sudo rm -rf /tmp/*
@@ -250,7 +289,68 @@ HOME_URL="https://b-e-n-z1342.github.io"
 EOF
 
 clear
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
+echo "установка подошла к концу, но остался один вопрос"
+echo "какой браузер ставить?"
+echo "!!! все браузеры будут установленны через flatpak с flathub !!!"
+
+function option1() {
+    flatpak install flathub org.mozilla.firefox
+}
+
+function option2() {
+    flatpak install flathub org.chromium.Chromium
+}
+
+function option3() {
+    flatpak install flathub com.brave.Browser
+}
+function option4() {
+    flatpak install flathub io.github.ungoogled_software.ungoogled_chromium
+}
+
+function option5() {
+    flatpak install flathub io.gitlab.librewolf-community
+}
+
+function option6() {
+    flatpak install flathub com.github.micahflee.torbrowser-launcher
+}
+function option7() {
+    flatpak install flathub ru.yandex.Browser
+}
+function option8() {
+    flatpak install flathub org.kde.falkon
+}
+function option9() {
+    echo "OK"
+}
+echo "Выберите вариант:"
+echo "1) firefox    --open source"
+echo "2) Chomium    -open source"
+echo "2) brave    -open source"
+echo "4) ungoogle-chroium    --open source"
+echo "5) libre-wolf    --open source - анонимность"
+echo "6) tor    - полная анонимность !! используте в благих целях !!     -open source"
+echo "7) Yandex"
+echo "8) falkon    --open source -легкий"
+echo "9) без браузера"
+read -p "Введите номер (1-9): " choice
+
+case $choice in
+    1) option1 ;;
+    2) option2 ;;
+    3) option3 ;;
+    4) option4 ;;
+    5) option5 ;;
+    6) option6 ;;
+    7) option7 ;;
+    8) option8 ;;
+    9) option9 ;;
+    *) echo "Неверный выбор" ;;
+esac
+
+
 echo "Установка завершена! Перезагрузка через 5 секунд..."
 sleep 5
 sudo reboot
