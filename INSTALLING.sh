@@ -160,14 +160,11 @@ ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
 ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
 EOD
 # Chroot-секция настройки ============================================================================================================================================================================
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-mount --bind /etc/resolv.conf /mnt/etc/resolv.conf
 printf '=%.0s' $(seq 1 $COLUMNS)
 
 echo "Переход в chroot-окружение..."
 sleep 2
-chroot /mnt /bin/bash << EOF
+artix-chroot /mnt /bin/bash << EOF
 
 # Права доступа
 chmod 600 /etc/{shadow,gshadow}
@@ -283,8 +280,8 @@ else
     pacman -S syslinux --noconfirm
     extlinux --install /boot
     dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
-    mkdir /boot/syslinux
-    cat > /boot/syslinux/syslinux.cfg << EOFD
+    mkdir /boot/extlinux
+    cat > /boot/extlinux/extlinux.conf << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
@@ -294,7 +291,6 @@ LABEL Quasarlinux
     APPEND root=UUID=$ROOT_UUID rw
     INITRD /initramfs-linux-zen.img
 EOFD
-    
 fi
 EOF
 sleep 2
@@ -333,6 +329,22 @@ EOF
 
 artix-chroot /mnt mkinitcpio -P
 sleep 2
+
+read -p "Вы хотите зайти в chroot? (Y/n): " answer
+case ${answer:0:1} in
+    y|Y|"")
+        artix-chroot /mnt
+    ;;
+    *)
+        echo "OK"
+    ;;
+esac
+
+
+
+
+
+
 umount /mnt/etc/resolv.conf
 umount /mnt/proc
 umount /mnt/sys
