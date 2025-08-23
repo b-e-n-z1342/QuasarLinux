@@ -20,7 +20,7 @@ sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
 # установка DE
 function hypr() {
-    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils hyprwatland-scanner xdg-desktop-portal-hyprland
+    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils hyprwayland-scanner xdg-desktop-portal-hyprland
     sudo rc-update add ly default
 }
 function plasma() {
