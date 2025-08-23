@@ -17,12 +17,12 @@ fi
 mkdir ~/.apps
 #сновные пакеты 
 sudo pacman -Syy
-sudo pacman -S wayland seatd lib32-gamemode lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit
+sudo pacman -S wayland seatd lib32-gamemode polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg
 # установка DE
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Выберите DE или WM."
 function hypr() {
-    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils hyprwayland-scanner xdg-desktop-portal-hyprland
+    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland
     sudo rc-update add ly default
 }
 function plasma() {
@@ -40,19 +40,24 @@ function plasma() {
     sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
     sudo rc-update sddm default
 }
-function mous() {
+function mouse() {
     sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings
     systemctl enable lightdm
+}
+function non() {
+    echo "OK"
 }
 echo "Выберите DE/WM"
 echo "1) hyprland"
 echo "2) KDE plasma"
 echo "3) xfce4"
-read -p "введите номер (1-3): " de
+echo "4) без DE/WM"
+read -p "введите номер (1-4): " de
 case $de in
     1) hypr ;;
     2) plasma ;;
-    3) mous ;;
+    3) mouse ;;
+    4) non ;;
     *) echo "неверный выбор" ;;
 esac
 clear
@@ -242,8 +247,6 @@ BASHRC_EOF
 
 sudo rc-update add elogind default
 sudo rc-update add pipewire-pulse default
-
-sudo pacman -S --noconfirm polkit polkit-qt6 polkit-kde-agent
 
 
 sudo cat << 'EOF' > /etc/os-release
