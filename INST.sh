@@ -18,6 +18,10 @@ mkdir ~/.apps
 #сновные пакеты 
 sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg
+
+git clone https://aur.archlinux.org/yay-bin
+cd yay-bin
+makepkg -si --noconfirm
 # установка DE
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Выберите DE или WM."
@@ -25,6 +29,7 @@ function hypr() {
     sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland
     sudo rc-update add ly default
 }
+
 function plasma() {
     sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc qt6 qt5
     sleep 1
@@ -40,9 +45,15 @@ function plasma() {
     sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
     sudo rc-update sddm default
 }
+
 function mouse() {
     sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings
-    systemctl enable lightdm
+    sudo rc-update add  lightdm default
+}
+
+function gnome() {
+    sudo pacman -S gnome gdm gdm-openrc
+    sudo rc-update add  gdm default
 }
 function non() {
     echo "OK"
@@ -51,13 +62,15 @@ echo "Выберите DE/WM"
 echo "1) hyprland"
 echo "2) KDE plasma"
 echo "3) xfce4"
-echo "4) без DE/WM"
-read -p "введите номер (1-4): " de
+echo "4) Gnome"
+echo "5) без DE/WM"
+read -p "введите номер (1-5): " de
 case $de in
     1) hypr ;;
     2) plasma ;;
     3) mouse ;;
     4) non ;;
+    5) gnome ;;
     *) echo "неверный выбор" ;;
 esac
 clear
@@ -110,22 +123,30 @@ function quasar() {
 }
 
 function ge() {
-    sudo wget -P /tmp https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton8-26/wine-lutris-GE-Proton8-26-x86_64.tar.xz
-    sudo tar -xf /tmp/wine-lutris-GE-Proton8-26-x86_64.tar.xz -C ~/.apps
+    wget -P /tmp https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton8-26/wine-lutris-GE-Proton8-26-x86_64.tar.xz
+    sleep 1
+    tar -xf /tmp/wine-lutris-GE-Proton8-26-x86_64.tar.xz -C ~/.apps
+    sleep 1
     cd ~/.apps
-    mv wine-lutris-GE-Proton8-26-x86_64 wine-ge
-    sudo ln -sf ~/.apps/wine-ge/bin/wine /usr/local/bin/wine
-    sudo ln -sf ~/.apps/wine-ge/bin/winecfg /usr/local/bin/winecfg
-    sudo ln -sf ~/.apps/wine-ge/bin/wineserver /usr/local/bin/wineserver
+    mv lutris-GE-Proton8-26-x86_64 wine-ge
+    sudo ln -sf wine-ge/bin/* /usr/local/bin
+    sudo ln -sf wine-ge/share/* /usr/share
+    sudo ln -sf wine-ge/lib/* /lib
+    sudo ln -sf wine-ge/lib64/* /usr/lib64
 }
 
 function proton() {
     wget -P /tmp https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton10-13/GE-Proton10-13.tar.gz
-    sudo tar -xf /tmp/GE-Proton10-13/GE-Proton10-13.tar.gz -C ~/.apps
-    sudo mv GE-Proton10-13/GE-Proton10-13 proton-ge
-    clear
-    echo "Proton требует ручной настройки"
+    tar -xf /tmp/GE-Proton10-13.tar.gz -C ~/.apps
+    mv GE-Proton10-13 proton-ge
+    sudo ln -sf proton-ge/files/bin/* /usr/local/bin
+    sudo ln -sf proton-ge/files/share/* /usr/share
+    sudo ln -sf proton-ge/files/lib/* /lib
 }
+function port() {
+    yay -S protoroton
+}
+
 function no() {
     echo "OK"
 }
@@ -135,7 +156,8 @@ echo "2) wine-staging"
 echo "3) wine-staging настроенный для QuasarLinux"
 echo "4) wine-ge"
 echo "5) proton-ge"
-echo "6) без wine"
+echo "6) PortProton --рекомендуется новичкам"
+echo "7) без wine"
 read -p "Введите номер (1-6): " choice
 
 case $choice in
@@ -148,10 +170,7 @@ case $choice in
     *) echo "Неверный выбор" ;;
 esac
 clear
-git clone https://aur.archlinux.org/yay-bin
-cd yay-bin
-makepkg -si --noconfirm
-clear
+
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Активировация   Waydroid"
 echo "Waydroid позволяет запускать android приложения в QuasarLinux"
@@ -319,15 +338,19 @@ function option5() {
 function option6() {
     flatpak install flathub com.github.micahflee.torbrowser-launcher
 }
+
 function option7() {
     flatpak install flathub ru.yandex.Browser
 }
+
 function option8() {
     flatpak install flathub org.kde.falkon
 }
+
 function option9() {
     echo "OK"
 }
+
 echo "Выберите вариант:"
 echo "1) firefox    --open source"
 echo "2) Chomium    -open source"
