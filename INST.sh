@@ -131,8 +131,6 @@ function ge() {
     mv lutris-GE-Proton8-26-x86_64 wine-ge
     sudo ln -sf wine-ge/bin/* /usr/local/bin
     sudo ln -sf wine-ge/share/* /usr/share
-    sudo ln -sf wine-ge/lib/* /lib
-    sudo ln -sf wine-ge/lib64/* /usr/lib64
 }
 
 function proton() {
@@ -141,7 +139,6 @@ function proton() {
     mv GE-Proton10-13 proton-ge
     sudo ln -sf proton-ge/files/bin/* /usr/local/bin
     sudo ln -sf proton-ge/files/share/* /usr/share
-    sudo ln -sf proton-ge/files/lib/* /lib
 }
 function port() {
     yay -S protoroton
