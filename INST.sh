@@ -17,7 +17,8 @@ fi
 mkdir ~/.apps
 #сновные пакеты 
 sudo pacman -Syy
-sudo pacman -S wayland seatd lib32-gamemode polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse pipewire gst-plugins-base gst-plugins-good  gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg
+sudo pacman -S wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse gst-plugins-base gst-plugins-good   --noconfirm
+sudo pacman -S gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
 
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
@@ -26,12 +27,13 @@ makepkg -si --noconfirm
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Выберите DE или WM."
 function hypr() {
-    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland
+    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland  --noconfirm
+    
     sudo rc-update add ly default
 }
 
 function plasma() {
-    sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc qt6 qt5
+    sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc qt6 qt5 --noconfirm
     sleep 1
     sudo pacman -Rns discover
     
@@ -47,12 +49,12 @@ function plasma() {
 }
 
 function mouse() {
-    sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings
+    sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
     sudo rc-update add  lightdm default
 }
 
 function gnome() {
-    sudo pacman -S gnome gdm gdm-openrc
+    sudo pacman -S gnome gdm gdm-openrc  --noconfirm
     sudo rc-update add  gdm default
 }
 function non() {
@@ -94,9 +96,9 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
 fi
 EOF
 clear
-flatpak install flathub -y
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install flathub -y
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка Wine"
 echo "Wine -- это не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
@@ -130,7 +132,10 @@ function ge() {
     cd ~/.apps
     mv lutris-GE-Proton8-26-x86_64 wine-ge
     sudo ln -sf wine-ge/bin/* /usr/local/bin
-    sudo ln -sf wine-ge/share/* /usr/share
+    sudo ln -sf wine-ge/lib/wine /usr/local/lib/wine
+    sudo ln -sf wine-ge/share/* /usr/local/share
+    sleep 1 
+    wineboot --init
 }
 
 function proton() {
@@ -138,7 +143,7 @@ function proton() {
     tar -xf /tmp/GE-Proton10-13.tar.gz -C ~/.apps
     mv GE-Proton10-13 proton-ge
     sudo ln -sf proton-ge/files/bin/* /usr/local/bin
-    sudo ln -sf proton-ge/files/share/* /usr/share
+    sudo ln -sf proton-ge/files/share/* /usr/local/share
 }
 function port() {
     yay -S protoroton
@@ -201,7 +206,7 @@ echo "это -- блокировка телеметрии"
 echo "около 60-80% системы без телеметрии, к релизу будет 90-99%"
 echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
 
-sleep 5
+sleep 7
 
 sudo tee /etc/host << 'EOF'
 0.0.0.0 vortex.data.microsoft.com
