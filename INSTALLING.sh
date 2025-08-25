@@ -66,6 +66,7 @@ fi
 
 # Проверка монтирования
 clear
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "=== ФИНАЛЬНАЯ РАЗМЕТКА ==="
 lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
 echo " "
@@ -75,7 +76,7 @@ clear
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano  dhcpcd mc htop wget curl git terminus-font pciutils 
+basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano ntfs-3g dosfstools dhcpcd mc htop wget curl git terminus-font pciutils 
 
 # Копирование дополнительных файлов
 [ -d /mnt/usr/share/pixmaps ] && rm -r /mnt/usr/share/pixmaps
@@ -140,17 +141,17 @@ fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 clear
 # Создание пользователя
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 read -p "Введите имя нового пользователя: " USERNAME
 artix-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
 artix-chroot /mnt passwd $USERNAME
 clear
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 echo "Создаём пароль для root"
 artix-chroot /mnt passwd 
 artix-chroot /mnt usermod -aG audio,video,input,storage,optical,lp,scanner $USERNAME
 mkdir -p /mnt/home/$USERNAME
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 clear
 artix-chroot /mnt /bin/bash << EOD
 ROOT_PART=$(findmnt -n -o SOURCE /)
@@ -160,7 +161,7 @@ ROOT_PART=$(mount | awk '$3 == "/" {print $1}')
 ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART") 
 EOD
 # Chroot-секция настройки ============================================================================================================================================================================
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 
 echo "Переход в chroot-окружение..."
 sleep 2
@@ -232,6 +233,15 @@ clear
 sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
+
+
+
+
+
+
+
+
+
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
@@ -241,10 +251,20 @@ elif echo "\$gpu_info" | grep -qi "Intel"; then
     pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver linux-firmware-intel
 elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
-    echo "NVIDIA драйвера могут буть не стабильны"
+    echo "!!! NVIDIA драйвера могут буть не стабильны и иметь проблемы с Wayland !!!"
+    sleep 5
     pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils linux-firmware-nvidia
+elif echo "\$gpu_info" | grep -qi "QXL"; then
+    pacman -S qemu-guest-agent qemu-guest-agent-openrc --noconfirm
+    rc-update add qemu-guest-agent default
+elif echo "\$gpu_info" | grep -qi "Virtio"; then
+    pacman -S --needed qemu-hw-display-virtio-gpu qemu-hw-display-virtio-gpu-gl qemu-hw-display-virtio-gpu-pci qemu-hw-display-virtio-gpu-pci-gl qemu-hw-display-virtio-gpu-pci-rutabaga qemu-hw-display-virtio-gpu-rutabaga --noconfirm
+    pacman -S --needed qemu-hw-display-virtio-vga qemu-hw-display-virtio-vga-gl qemu-hw-display-virtio-vga-rutabaga qemu-hw-s390x-virtio-gpu-ccw virtiofsd vulkan-virtio lib32-vulkan-virtio --noconfirm
+    rc-update add qemu-guest-agent default 
 else
     echo "Видеокарта не определена, устанавливаю базовые драйверы"
+    echo "осторожно низкая производительность!"
+    sleep 5
     pacman -S --noconfirm mesa
 fi
 
@@ -260,6 +280,7 @@ rc-update add elogind default
 rc-update add acpid default
 
 EOF
+printf '=%.0s' $(seq 1 $(tput cols))
 function Kaliningrad() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Kaliningrad /etc/localtime
 }
@@ -370,34 +391,246 @@ case $local in
 esac
 sleep 5
 clear
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 artix-chroot /mnt pacman -Syy
-artix-chroot /mnt /bin/bash << EOF
+
 if [ "$UEFI_MODE" -eq 1 ]; then
-    pacman -S grub os-prober efibootmgr --noconfirm
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
-    sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
-    grub-mkconfig -o /boot/grub/grub.cfg
+    function grub() {
+        artix-chroot /mnt pacman -S grub os-prober efibootmgr --noconfirm
+        artix-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable --recheck
+        artix-chroot /mnt sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+        artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+    }
+    
+    function efistub() {
+        artix-chroot /mnt pacman -S efibootmgr os-prober --noconfirm
+        artix-chroot /mnt efibootmgr -b 0000 -B
+        artix-chroot /mnt efibootmgr -c -d /dev/"$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen' -u 'root=UUID="$ROOT_UUID" rw initrd=\initramfs-linux-zen.img'
+    }
+    function refind() {
+        artix-chroot /mnt pacman -S efibootmgr os-prober refind --noconfirm
+        artix-chroot /mnt refind-install
+        cat /boot/efi/EFI/refind/refind.conf << EOF
+# Создаем полный конфиг с tee
+sudo tee /boot/efi/EFI/refind/refind.conf << 'EOF'
+# ==============================================
+# БАЗОВЫЕ НАСТРОЙКИ
+# ==============================================
+
+# Время ожидания выбора (секунды)
+timeout 5
+
+# Выбор по умолчанию (по имени или порядку)
+default_selection "Artix Linux"
+
+# Скрыть пользовательский интерфейс rEFInd
+hideui all
+
+# Показать определенные элементы
+showui banners,labels,bootprompt
+
+# ==============================================
+# ВНЕШНИЙ ВИД И ТЕМЫ
+# ==============================================
+
+# Разрешение экрана
+resolution 1920x1080
+
+# Размер иконок
+icon_size 128
+
+# Шрифт (можно изменить)
+font_size 16
+
+# Путь к теме (раскомментировать если есть тема)
+#use_graphics_for linux,osx,windows
+#banner hostname.bmp
+#banner_scale fillscreen
+
+# Цвета текста
+text_mode true
+selection_color cyan
+
+# ==============================================
+# НАСТРОЙКИ СКАНИРОВАНИЯ
+# ==============================================
+
+# Сканировать все Linux ядра
+scan_all_linux_kernels true
+
+# Также сканировать вторичные файловые системы
+also_scan_files ext4,vfat,btrfs
+
+# Сканировать для других ОС
+scanfor manual,external,optical
+
+# Игнорировать определенные файлы
+dont_scan_files vmlinuz.old,initrd.img.old
+
+# ==============================================
+# ПАРАМЕТРЫ ЗАГРУЗКИ LINUX
+# ==============================================
+
+# Общие параметры ядра
+extra_kernel_version_strings linux,linux-lts,linux-zen
+
+# Параметры по умолчанию для всех Linux записей
+extra_kernel_options root=UUID="$ROOT_UUID" rw quiet loglevel=3
+
+# Инициализация (для OpenRC)
+initrd /boot/initramfs-%v.img
+
+# ==============================================
+# РУЧНЫЕ ЗАПИСИ (MENUENTRIES)
+# ==============================================
+
+# Основная запись Quasar Linux
+menuentry "Quasar Linux" {
+    icon /EFI/refind/icons/os_linux.png
+    volume "QUASR_ROOT"
+    loader /boot/vmlinuz-linux-zen
+    initrd /boot/initramfs-linux-zen.img
+    options "root=UUID="$ROOT_UUID" rw initrd=/boot/initramfs-linux.img quiet"
+    enabled true
+}
+# Режим восстановления
+menuentry "QuasarLinux falback" {
+    icon /EFI/refind/icons/os_linux.png
+    loader /boot/vmlinuz-linux-zen
+    initrd /boot/initramfs-linux-zen-falback.img
+    options "root=UUID="$ROOT_UUID" rw single init=/bin/bash"
+}
+
+# ==============================================
+# ДРУГИЕ ОПЕРАЦИОННЫЕ СИСТЕМЫ
+# ==============================================
+
+}
+
+# Memtest86+
+menuentry "Memtest86+" {
+    icon /EFI/refind/icons/tool.png
+    loader /boot/memtest86+/memtest.efi
+}
+
+# ==============================================
+# НАСТРОЙКИ БЕЗОПАСНОСТИ
+# ==============================================
+
+# Запретить редактирование параметров
+disable_autoboot no
+disable_manual no
+
+# Пароль (раскомментировать если нужно)
+#password $5$rounds=10000$salt1234$hash1234567890
+
+# ==============================================
+# ЭКСПЕРИМЕНТАЛЬНЫЕ НАСТРОЙКИ
+# ==============================================
+
+# Использовать графику для отображения
+use_graphics_for linux,osx,windows
+
+# Автоматическое определение лучшего разрешения
+auto_detect_best_resolution true
+
+# Минимальная задержка для USB устройств
+usb_delay 2000
+
+# ==============================================
+# ПЕРЕМЕННЫЕ СРЕДЫ
+# ==============================================
+
+# Установка переменных EFI
+set ostype Linux
+set rootpart UUID=ваш_uuid_root
+
+# ==============================================
+# КОМАНДЫ ПЕРЕЗАГРУЗКИ/ВЫКЛЮЧЕНИЯ
+# ==============================================
+
+# Показать пункты выключения
+showtools shutdown,reboot,firmware
+
+# Настройка инструментов
+tool shutdown {
+    icon /EFI/refind/icons/shutdown.png
+    loader /EFI/refind/icons/shutdown.efi
+}
+
+tool reboot {
+    icon /EFI/refind/icons/reboot.png
+    loader /EFI/refind/icons/reboot.efi
+}
+
+tool firmware {
+    icon /EFI/refind/icons/firmware.png
+    loader /EFI/refind/icons/firmware.efi
+}
+
+# ==============================================
+# ЗАГРУЗОЧНЫЕ СООБЩЕНИЯ
+# ==============================================
+
+# Приветственное сообщение
+banner_message "Добро пожаловать в rEFInd Boot Manager"
+
+# Сообщение внизу экрана
+bootprompt_message "Нажмите любую клавишу для меню загрузки..."
+
+EOF
+    }
+    echo "Выберите загрузчик для EFI"
+    echo "
+    1) grub2 --рекомендуется из-за стабильности
+    2) efistub 
+    3) rEFInd
+    "
+    read -p "Какой ставить? [1-3]: " efi
+    case $efi in
+        1) grub ;;
+        2) efistub ;;
+        3) refind ;;
+        *) echo "Неверный выбор, попробуйте ещё раз."
+    esac
 else
-    pacman -S syslinux --noconfirm
-    extlinux --install /boot
-    dd if=/usr/lib/syslinux/bios/mbr.bin of="$ROOT_DISK" bs=440 count=1 conv=notrunc
-    mkdir /boot/extlinux
-    cat > /boot/extlinux/extlinux.conf << EOFD
+    function grub() {
+        artix-chroot /mnt pacman -S grub os-prober --noconfirm
+        artix-chroot /mnt grub-install --target=i386-pc --boot-directory=/boot --recheck /dev/"$DISK"
+        artix-chroot /mnt sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
+        artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+    }
+    function syslinux() { 
+    artix-chroot /mnt pacman -S syslinux --noconfirm
+    artix-chroot /mnt extlinux --install /boot
+    artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
+    artix-chroot /mnt mkdir /boot/extlinux
+    artix-chroot /mnt cat > /boot/extlinux/extlinux.conf << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
 
 LABEL Quasarlinux
     KERNEL /vmlinuz-linux-zen
-    APPEND root=UUID=$ROOT_UUID rw
+    APPEND root=UUID="$ROOT_UUID" rw
     INITRD /initramfs-linux-zen.img
 EOFD
+    }
+    echo "выберите загрузчик"
+    echo "
+    1) grub
+    2) syslinux
+    "
+    read -p "какой ставить? [1-2]: " boot
+    case $boot in
+        1) grub
+        2) syslinux
+        *) echo "неверное число, попробуйте ещё раз."
 fi
 EOF
 sleep 2
 clear
-printf '=%.0s' $(seq 1 $COLUMNS)
+printf '=%.0s' $(seq 1 $(tput cols))
 cp ~/QuasarLinux/INSTALL.sh /mnt/home/$USERNAME/
 cp ~/QuasaarLinux/INST.sh /mnt/home/$USERNAME/
 
