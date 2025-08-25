@@ -320,33 +320,59 @@ echo "!!! все браузеры будут установленны через
 
 function option1() {
     flatpak install flathub org.mozilla.firefox
+    cat /usr/local/bin/firefox << EOF
+flatpak run org.mozilla.firefox
+EOF
+
+    
 }
 
 function option2() {
     flatpak install flathub org.chromium.Chromium
+    cat /usr/local/bin/chromium << EOS
+flatpak run org.chromium.Chromium
+EOS
 }
 
 function option3() {
     flatpak install flathub com.brave.Browser
+    cat /usr/local/bin/chromium << EOS
+flatpak run org.chromium.Chromium
+EOS
 }
 function option4() {
     flatpak install flathub io.github.ungoogled_software.ungoogled_chromium
+        cat /usr/local/bin/chromium << EOS
+flatpak run io.github.ungoogled_software.ungoogled_chromium
+EOS
 }
 
 function option5() {
     flatpak install flathub io.gitlab.librewolf-community
+        cat /usr/local/bin/librewolf-community<< EOS
+flatpak run io.gitlab.librewolf-community
+EOS
 }
 
 function option6() {
     flatpak install flathub com.github.micahflee.torbrowser-launcher
+        cat /usr/local/bin/torbrowser-launcher << EOS
+flatpak run org.torproject.torbrowser-launcher
+EOS
 }
 
 function option7() {
     flatpak install flathub ru.yandex.Browser
+        cat /usr/local/bin/Yandex.Browser << EOS
+flatpak run ru.yandex.Browser
+EOS
 }
 
 function option8() {
     flatpak install flathub org.kde.falkon
+    cat /usr/local/bin/falkon << EOS
+flatpak run org.kde.falkon
+EOS
 }
 
 function option9() {
