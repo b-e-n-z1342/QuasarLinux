@@ -139,4 +139,4 @@ if ! check_internet; then
 fi
 
 echo "Переходим к основной установке..."
-exec ./INST.sh
+bash INST.sh
