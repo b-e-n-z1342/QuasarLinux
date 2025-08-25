@@ -15,14 +15,17 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 mkdir ~/.apps
+git clone https://aur.archlinux.org/yay-bin
+cd yay-bin
+makepkg -si --noconfirm
+
+
 #сновные пакеты 
 sudo pacman -Syy
 sudo pacman -S wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse gst-plugins-base gst-plugins-good   --noconfirm
 sudo pacman -S gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
 
-git clone https://aur.archlinux.org/yay-bin
-cd yay-bin
-makepkg -si --noconfirm
+
 # установка DE
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Выберите DE или WM."
@@ -178,8 +181,10 @@ echo "Активировация   Waydroid"
 echo "Waydroid позволяет запускать android приложения в QuasarLinux"
 read -p "Начать установку Waydroid? (y/N): " waydroid
 if [[ "$waydroid" =~ ^[Yy]$ ]]; then
+    sudo pacman -S lxc  python-gobject nftables dnsmasq gtk3 dbus-python --noconfirm
     sudo pacman -S python --noconfirm
     yay -S waydroid --noconfirm
+    yay -S waydroid-openrc
     waydroid init
     sudo cat << 'EOF' > /etc/init.d/waydroid
 #!/sbin/openrc-run
