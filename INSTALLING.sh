@@ -173,10 +173,6 @@ chown root:root /etc/{shadow,gshadow}
 # Sudo
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
-# Настройка времени
-ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-hwclock --systohc
-
 # Локализация
 sed -i 's/^#\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
 sed -i 's/^#\(ru_RU.UTF-8 UTF-8\)/\1/' /etc/locale.gen
@@ -263,9 +259,115 @@ rc-update add udev default
 rc-update add elogind default
 rc-update add acpid default
 
-
-
 EOF
+function Kaliningrad() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Kaliningrad /etc/localtime
+}
+function Moscow() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+}
+function Volgograd() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Volgograd  /etc/localtime
+}
+function Astrakhan() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Astrakhan /etc/localtime
+}
+function Saratov() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Saratov /etc/localtime
+}
+function Ulyanovsk () {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Ulyanovsk /etc/localtime
+}
+function Samara() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Samara /etc/localtime
+}
+function Yekaterinburg() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Yekaterinburg /etc/localtime
+}
+function Omsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Omsk  /etc/localtime
+}
+function Krasnoyarsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Krasnoyarsk /etc/localtime
+}
+function Novokuznetsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Novokuznetsk /etc/localtime
+}
+function Irkutsk () {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Irkutsk /etc/localtime
+}
+function Yakutsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Yakutsk /etc/localtime
+}
+function Chita() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Chita /etc/localtime
+}
+function Vladivostok() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Vladivostok /etc/localtime
+}
+function Ust-Nera() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Ust-Nera /etc/localtime
+}
+function Magadan() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Magadan /etc/localtime
+}
+function Kamchatka() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Kamchatka /etc/localtime
+}
+function Anadyr() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Anadyr /etc/localtime
+}
+function Sakhalin () {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Sakhalin /etc/localtime
+}
+function Novosibirsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Novosibirsk /etc/localtime
+}
+function Tomsk() {
+    artix-chroot /mnt ln -sf /usr/share/zoS)neinfo/Asia/Tomsk /etc/localtime
+}
+function Barnaul() {
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Barnaul /etc/localtime
+}
+echo "какое регеонное время вы хотите поставить?" 
+echo "! ! ! В QuasarLinux пока что только регионны РФ ! ! !"
+echo "
+1) Калининград       9) Омск               17) Магадан
+2) Москва           10) Красноярск         18) Камчатка
+3) Волгоград        11) Новокузнецк        19) Анадырь
+4) Астрахань        12) Иркутск            20) Сахалин
+5) Саратов          13) Якутск             21) Новосибирск
+6) Ульяновск        14) Чита               22) Томск
+7) Самара           15) Владивосток        23) Барнаул
+8) Екатеренбург     16) Усть-Нера
+"
+read -p "Выберите регион [1-23]: " local 
+case $local in
+    1) Kaliningrad ;;
+    2) Moscow ;;
+    3) Volgograd ;;
+    4) Astrakhan ;;
+    5) Saratov ;;
+    6) Ulyanovsk ;;
+    7) Samara ;;
+    8) Yekaterinburg ;;  
+    9) Omsk ;;
+    10) rKrasnoyarsk ;;
+    11) Novokuznetsk ;;
+    12) Irkutsk ;;
+    13) Yakutsk ;;
+    14) Chita ;;
+    15) Vladivostok ;;
+    16) Ust-Nera ;;
+    17) /Magadan ;;
+    18) Kamchatka ;; 
+    19) Anadyr ;;
+    20) Sakhalin ;;
+    21) Novosibirsk ;;
+    22) Tomsk ;;
+    23) Barnaul ;;
+    *) echo "Неверный выбор. Выход." ;;
+esac
 sleep 5
 clear
 printf '=%.0s' $(seq 1 $COLUMNS)
