@@ -16,12 +16,13 @@ echo "==========================================================================
 function chroot() {
     echo "выберите разделы"
     lsblk -d -o NAME,SIZE,MODEL,TYPE
-    read -p "ведите имя диска с которым будет происходить работа (например: sda): " DISSK
-    DISK=/dev/$DISSK
+    read -p "ведите имя диска с которым будет происходить работа (например: sda): " DISK
+    DISK=/dev/$DISK
     if [ ! -e "$DISK" ]; then
         echo "Ошибка: диск $DISK не существует!"
         exit 1
     fi
+    lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
     read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
     ROOT_PART="/dev/$ROOT_PART"
 
@@ -44,8 +45,12 @@ function chroot() {
         mkdir -p /mnt/boot
         mount $BOOT_PART /mnt/boot
     fi
-    
-    
+    mount --types proc /proc /mnt/proc
+    mount --rbind /sys /mnt/sys
+    mount --rbind /dev /mnt/dev
+    mount --rbind /run /mnt/run
+    cp /etc/resolv.conf /mnt/etc/
+    chroot /mnt
 }
 function install() {
     bash INS.sh
