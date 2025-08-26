@@ -406,14 +406,12 @@ if [ "$UEFI_MODE" -eq 1 ]; then
     function efistub() {
         artix-chroot /mnt pacman -S efibootmgr os-prober --noconfirm
         artix-chroot /mnt efibootmgr -b 0000 -B
-        artix-chroot /mnt efibootmgr -c -d /dev/"$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen' -u 'root=UUID="$ROOT_UUID" rw initrd=\initramfs-linux-zen.img'
+        artix-chroot /mnt efibootmgr -c -d /dev/"$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen' -u 'root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img'
     }
     function refind() {
         artix-chroot /mnt pacman -S efibootmgr os-prober refind --noconfirm
         artix-chroot /mnt refind-install
-        cat /boot/efi/EFI/refind/refind.conf << EOF
-# Создаем полный конфиг с tee
-sudo tee /boot/efi/EFI/refind/refind.conf << 'EOF'
+        tee /boot/efi/EFI/refind/refind.conf << EOF
 # ==============================================
 # БАЗОВЫЕ НАСТРОЙКИ
 # ==============================================
@@ -498,7 +496,7 @@ menuentry "Quasar Linux" {
 menuentry "QuasarLinux falback" {
     icon /EFI/refind/icons/os_linux.png
     loader /boot/vmlinuz-linux-zen
-    initrd /boot/initramfs-linux-zen-falback.img
+    initrd /boot/initramfs-linux-zen-fallback.img
     options "root=UUID="$ROOT_UUID" rw single init=/bin/bash"
 }
 
@@ -606,14 +604,14 @@ else
     artix-chroot /mnt extlinux --install /boot
     artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
     artix-chroot /mnt mkdir /boot/extlinux
-    artix-chroot /mnt cat > /boot/extlinux/extlinux.conf << EOFD
+    artix-chroot /mnt tee > /boot/extlinux/extlinux.conf << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
 
 LABEL Quasarlinux
     KERNEL /vmlinuz-linux-zen
-    APPEND root=UUID="$ROOT_UUID" rw
+    APPEND root=UUID=$ROOT_UUID rw
     INITRD /initramfs-linux-zen.img
 EOFD
     }
@@ -624,11 +622,11 @@ EOFD
     "
     read -p "какой ставить? [1-2]: " boot
     case $boot in
-        1) grub
-        2) syslinux
-        *) echo "неверное число, попробуйте ещё раз."
+        1) grub ;;
+        2) syslinux ;;
+        *) echo "неверное число, попробуйте ещё раз." ;;
 fi
-EOF
+
 sleep 2
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
