@@ -296,7 +296,7 @@ function Astrakhan() {
 function Saratov() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Saratov /etc/localtime
 }
-function Ulyanovsk () {
+function Ulyanovsk() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Ulyanovsk /etc/localtime
 }
 function Samara() {
@@ -314,7 +314,7 @@ function Krasnoyarsk() {
 function Novokuznetsk() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Novokuznetsk /etc/localtime
 }
-function Irkutsk () {
+function Irkutsk() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Irkutsk /etc/localtime
 }
 function Yakutsk() {
@@ -338,14 +338,14 @@ function Kamchatka() {
 function Anadyr() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Anadyr /etc/localtime
 }
-function Sakhalin () {
+function Sakhalin() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Sakhalin /etc/localtime
 }
 function Novosibirsk() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Novosibirsk /etc/localtime
 }
 function Tomsk() {
-    artix-chroot /mnt ln -sf /usr/share/zoS)neinfo/Asia/Tomsk /etc/localtime
+    artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Tomsk /etc/localtime
 }
 function Barnaul() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Asia/Barnaul /etc/localtime
@@ -373,14 +373,14 @@ case $local in
     7) Samara ;;
     8) Yekaterinburg ;;  
     9) Omsk ;;
-    10) rKrasnoyarsk ;;
+    10) Krasnoyarsk ;;
     11) Novokuznetsk ;;
     12) Irkutsk ;;
     13) Yakutsk ;;
     14) Chita ;;
     15) Vladivostok ;;
     16) Ust-Nera ;;
-    17) /Magadan ;;
+    17) Magadan ;;
     18) Kamchatka ;; 
     19) Anadyr ;;
     20) Sakhalin ;;
@@ -389,6 +389,7 @@ case $local in
     23) Barnaul ;;
     *) echo "Неверный выбор. Выход." ;;
 esac
+artix-chroot /mnt hwclock --systohc
 sleep 5
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
