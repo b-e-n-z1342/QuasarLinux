@@ -134,9 +134,8 @@ function ge() {
     sleep 1
     cd ~/.apps
     mv lutris-GE-Proton8-26-x86_64 wine-ge
-    sudo ln -sf wine-ge/bin/* /usr/local/bin
-    sudo ln -sf wine-ge/lib/wine /usr/local/lib/wine
-    sudo ln -sf wine-ge/share/* /usr/local/share
+    sudo ln -s wine-ge/bin/* /usr/local/bin
+    sudo ln -s wine-ge/share/* /usr/local/share
     sleep 1 
     wineboot --init
 }
