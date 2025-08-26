@@ -395,6 +395,10 @@ clear
 printf '=%.0s' $(seq 1 $(tput cols))
 artix-chroot /mnt pacman -Syy
 
+mkinitcpio -P
+
+ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART")
+export ROOT_UUID
 if [ "$UEFI_MODE" -eq 1 ]; then
     function grub() {
         artix-chroot /mnt pacman -S grub os-prober efibootmgr --noconfirm
@@ -406,21 +410,14 @@ if [ "$UEFI_MODE" -eq 1 ]; then
     function efistub() {
         artix-chroot /mnt pacman -S efibootmgr os-prober --noconfirm
         artix-chroot /mnt efibootmgr -b 0000 -B
-        artix-chroot /mnt efibootmgr -c -d /dev/"$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen' -u 'root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img'
+        artix-chroot /mnt efibootmgr -c -d "$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen' -u 'root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img'
     }
     function refind() {
         artix-chroot /mnt pacman -S efibootmgr os-prober refind --noconfirm
         artix-chroot /mnt refind-install
-        tee /boot/efi/EFI/refind/refind.conf << EOF
-# ==============================================
-# БАЗОВЫЕ НАСТРОЙКИ
-# ==============================================
-
-# Время ожидания выбора (секунды)
+        artix-chroot /mnt tee /boot/efi/EFI/refind/refind.conf << EOF
 timeout 5
-
-# Выбор по умолчанию (по имени или порядку)
-default_selection "Artix Linux"
+default_selection "Quasar Linux"
 
 # Скрыть пользовательский интерфейс rEFInd
 hideui all
@@ -428,9 +425,6 @@ hideui all
 # Показать определенные элементы
 showui banners,labels,bootprompt
 
-# ==============================================
-# ВНЕШНИЙ ВИД И ТЕМЫ
-# ==============================================
 
 # Разрешение экрана
 resolution 1920x1080
@@ -450,9 +444,6 @@ font_size 16
 text_mode true
 selection_color cyan
 
-# ==============================================
-# НАСТРОЙКИ СКАНИРОВАНИЯ
-# ==============================================
 
 # Сканировать все Linux ядра
 scan_all_linux_kernels true
@@ -466,10 +457,6 @@ scanfor manual,external,optical
 # Игнорировать определенные файлы
 dont_scan_files vmlinuz.old,initrd.img.old
 
-# ==============================================
-# ПАРАМЕТРЫ ЗАГРУЗКИ LINUX
-# ==============================================
-
 # Общие параметры ядра
 extra_kernel_version_strings linux,linux-lts,linux-zen
 
@@ -479,9 +466,6 @@ extra_kernel_options root=UUID="$ROOT_UUID" rw quiet loglevel=3
 # Инициализация (для OpenRC)
 initrd /boot/initramfs-%v.img
 
-# ==============================================
-# РУЧНЫЕ ЗАПИСИ (MENUENTRIES)
-# ==============================================
 
 # Основная запись Quasar Linux
 menuentry "Quasar Linux" {
@@ -500,58 +484,22 @@ menuentry "QuasarLinux falback" {
     options "root=UUID="$ROOT_UUID" rw single init=/bin/bash"
 }
 
-# ==============================================
-# ДРУГИЕ ОПЕРАЦИОННЫЕ СИСТЕМЫ
-# ==============================================
-
-}
-
-# Memtest86+
-menuentry "Memtest86+" {
-    icon /EFI/refind/icons/tool.png
-    loader /boot/memtest86+/memtest.efi
-}
-
-# ==============================================
-# НАСТРОЙКИ БЕЗОПАСНОСТИ
-# ==============================================
-
-# Запретить редактирование параметров
 disable_autoboot no
 disable_manual no
 
-# Пароль (раскомментировать если нужно)
-#password $5$rounds=10000$salt1234$hash1234567890
-
-# ==============================================
-# ЭКСПЕРИМЕНТАЛЬНЫЕ НАСТРОЙКИ
-# ==============================================
-
-# Использовать графику для отображения
 use_graphics_for linux,osx,windows
 
-# Автоматическое определение лучшего разрешения
+
 auto_detect_best_resolution true
 
-# Минимальная задержка для USB устройств
+
 usb_delay 2000
 
-# ==============================================
-# ПЕРЕМЕННЫЕ СРЕДЫ
-# ==============================================
-
-# Установка переменных EFI
 set ostype Linux
 set rootpart UUID=ваш_uuid_root
 
-# ==============================================
-# КОМАНДЫ ПЕРЕЗАГРУЗКИ/ВЫКЛЮЧЕНИЯ
-# ==============================================
-
-# Показать пункты выключения
 showtools shutdown,reboot,firmware
 
-# Настройка инструментов
 tool shutdown {
     icon /EFI/refind/icons/shutdown.png
     loader /EFI/refind/icons/shutdown.efi
@@ -567,14 +515,8 @@ tool firmware {
     loader /EFI/refind/icons/firmware.efi
 }
 
-# ==============================================
-# ЗАГРУЗОЧНЫЕ СООБЩЕНИЯ
-# ==============================================
-
-# Приветственное сообщение
 banner_message "Добро пожаловать в rEFInd Boot Manager"
 
-# Сообщение внизу экрана
 bootprompt_message "Нажмите любую клавишу для меню загрузки..."
 
 EOF
@@ -603,8 +545,8 @@ else
     artix-chroot /mnt pacman -S syslinux --noconfirm
     artix-chroot /mnt extlinux --install /boot
     artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
-    artix-chroot /mnt mkdir /boot/extlinux
-    artix-chroot /mnt tee > /boot/extlinux/extlinux.conf << EOFD
+    artix-chroot /mnt mkdir -p /boot/extlinux
+    artix-chroot /mnt tee /boot/extlinux/extlinux.conf << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
@@ -630,8 +572,8 @@ fi
 sleep 2
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
-cp ~/QuasarLinux/INSTALL.sh /mnt/home/$USERNAME/
-cp ~/QuasaarLinux/INST.sh /mnt/home/$USERNAME/
+cp /root/QuasarLinux/INSTALL.sh /mnt/home/$USERNAME/
+cp /root/QuasaarLinux/INST.sh /mnt/home/$USERNAME/
 
 
 
@@ -648,19 +590,13 @@ artix-chroot /mnt rc-update add NetworkManager default
 
 chown $USERNAME:$USERNAME /mnt/home/$USERNAME/README.txt
 
-
-
-
 cat << 'EOF' >> /mnt/home/$USERNAME/.bashrc
 if [ ! -f ~/.Quasar_post_done ]; then
     ./INSTALL.sh
     touch ~/.Quasar_post_done
 fi
 EOF
-
-
-
-artix-chroot /mnt echo "Welcome to QuasarLinux" | sudo tee /etc/motd
+artix-chroot /mnt sh -c 'echo "Welcome to QuasarLinux" > /etc/motd'
 artix-chroot /mnt mkinitcpio -P
 sleep 2
 
@@ -673,11 +609,6 @@ case ${answer:0:1} in
         echo "OK"
     ;;
 esac
-
-
-
-
-
 
 umount /mnt/etc/resolv.conf
 umount /mnt/proc
