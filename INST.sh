@@ -60,24 +60,28 @@ function gnome() {
     sudo pacman -S gnome gdm gdm-openrc  --noconfirm
     sudo rc-update add  gdm default
 }
-function non() {
-    echo "OK"
-}
-echo "Выберите DE/WM"
-echo "1) hyprland"
-echo "2) KDE plasma"
-echo "3) xfce4"
-echo "4) Gnome"
-echo "5) без DE/WM"
-read -p "введите номер (1-5): " de
+dialog --title "Меню" --menu "Выберите вариант:" 15 70 5 \
+1 "Hyprland" \
+2 "KDE Plasma" \
+3 "Xfce4" \
+4 "Gnome" 2> /tmp/menu.txt
+
+# Проверяем, не нажал ли пользователь Cancel или ESC
+if [ $? -ne 0 ]; then
+    clear
+    echo "пропускаем"
+fi
+
+de=$(cat /tmp/menu.txt)
 case $de in
     1) hypr ;;
     2) plasma ;;
     3) mouse ;;
-    4) non ;;
-    5) gnome ;;
-    *) echo "неверный выбор" ;;
+    4) gnome ;;
 esac
+clear
+# Очищаем временный файл
+rm -f /tmp/menu.txt
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
 read -p "Вы хотите установить QT/GTK? (Y/n): " answer
