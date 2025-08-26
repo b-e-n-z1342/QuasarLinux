@@ -524,7 +524,7 @@ EOF
     echo "Выберите загрузчик для EFI"
     echo "
     1) grub2 --рекомендуется из-за стабильности
-    2) efistub 
+    2) efistub -- ЭКСПЕРИМЕНТАЛЬНО!
     3) rEFInd
     "
     read -p "Какой ставить? [1-3]: " efi
@@ -560,7 +560,7 @@ EOFD
     echo "выберите загрузчик"
     echo "
     1) grub
-    2) syslinux
+    2) syslinux -- ЭКСПЕРИМЕНТАЛЬНО!
     "
     read -p "какой ставить? [1-2]: " boot
     case $boot in
