@@ -661,7 +661,7 @@ EOF
 
 
 
-
+artix-chroot /mnt echo "Welcome to QuasarLinux" | sudo tee /etc/motd
 artix-chroot /mnt mkinitcpio -P
 sleep 2
 
