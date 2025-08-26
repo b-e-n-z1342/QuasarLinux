@@ -53,7 +53,7 @@ function chroot() {
     chroot /mnt
 }
 function install() {
-    bash INS.sh
+    bash INSTALLING.sh
 }
 echo "что вы хотить сделать?"
 echo "1) Chroot"
