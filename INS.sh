@@ -13,10 +13,12 @@ echo "==========================================================================
 =                                                                                               =
 =================================================================================================
 "
+UEFI_MODE=0
+[ -d /sys/firmware/efi ] && UEFI_MODE=1
 function chroot() {
     echo "выберите разделы"
     lsblk -d -o NAME,SIZE,MODEL,TYPE
-    read -p "ведите имя диска с которым будет происходить работа (например: sda): " DISK
+    read -p "введите имя диска с которым будет происходить работа (например: sda): " DISK
     DISK=/dev/$DISK
     if [ ! -e "$DISK" ]; then
         echo "Ошибка: диск $DISK не существует!"
@@ -38,11 +40,9 @@ function chroot() {
     [ ! -e "$BOOT_PART" ] && echo "Ошибка: $BOOT_PART не существует!" && exit 1
     mount $ROOT_PART /mnt
 
-    if [ $UEFI_MODE -eq 1 ]; then
-        mkdir -p /mnt/boot/efi
+    if [ $UEFI_MODE -eq 1 ]; then       
         mount $BOOT_PART /mnt/boot/efi
     else
-        mkdir -p /mnt/boot
         mount $BOOT_PART /mnt/boot
     fi
     mount --types proc /proc /mnt/proc
@@ -50,7 +50,7 @@ function chroot() {
     mount --rbind /dev /mnt/dev
     mount --rbind /run /mnt/run
     cp /etc/resolv.conf /mnt/etc/
-    chroot /mnt
+    chroot /mnt /bin/bash
 }
 function install() {
     bash INSTALLING.sh
@@ -62,5 +62,5 @@ read -p "выберите [1-2]" ins
 case $ins in
     1) chroot ;;
     2) install ;;
-    *) echo "неправильный выбор" 
+    *) echo "неправильный выбор" ;;
 esac
