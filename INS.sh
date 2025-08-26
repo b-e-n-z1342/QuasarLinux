@@ -58,6 +58,7 @@ function install() {
 echo "что вы хотить сделать?"
 echo "1) Chroot"
 echo "2) установка "
+read -p "выберите [1-2]" ins
 case $ins in
     1) chroot ;;
     2) install ;;
