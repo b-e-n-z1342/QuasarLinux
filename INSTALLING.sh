@@ -467,7 +467,7 @@ extra_kernel_options root=UUID="$ROOT_UUID" rw quiet loglevel=3
 initrd /boot/initramfs-%v.img
 
 
-# Основная запись Quasar Linux
+# Основная зап case $boись Quasar Linux
 menuentry "Quasar Linux" {
     icon /EFI/refind/icons/os_linux.png
     volume "QUASR_ROOT"
@@ -567,6 +567,7 @@ EOFD
         1) grub ;;
         2) syslinux ;;
         *) echo "неверное число, попробуйте ещё раз." ;;
+    esac
 fi
 
 sleep 2
