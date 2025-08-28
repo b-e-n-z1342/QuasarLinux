@@ -15,7 +15,7 @@ echo "==========================================================================
 "
 UEFI_MODE=0
 [ -d /sys/firmware/efi ] && UEFI_MODE=1
-function chroot() {
+function chroot_recovery() {
     echo "выберите разделы"
     lsblk -d -o NAME,SIZE,MODEL,TYPE
     read -p "введите имя диска с которым будет происходить работа (например: sda): " DISK
@@ -50,9 +50,9 @@ function chroot() {
     mount --rbind /dev /mnt/dev
     mount --rbind /run /mnt/run
     cp /etc/resolv.conf /mnt/etc/
-    chroot /mnt /bin/bash
+    command chroot /mnt /bin/bash
 }
-function install() {
+function install_system() {
     bash INSTALLING.sh
 }
 echo "что вы хотить сделать?"
@@ -60,7 +60,7 @@ echo "1) Chroot"
 echo "2) установка "
 read -p "выберите [1-2]" ins
 case $ins in
-    1) chroot ;;
-    2) install ;;
+    1) chroot_recovery ;;
+    2) install_system ;;
     *) echo "неправильный выбор" ;;
 esac
