@@ -93,7 +93,7 @@ clear
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano ntfs-3g dosfstools dhcpcd mc htop wget curl git terminus-font pciutils 
+basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano ntfs-3g dosfstools dhcpcd mc htop wget curl git terminus-font pciutils vim dialog
 
 # Копирование дополнительных файлов
 [ -d /mnt/usr/share/pixmaps ] && rm -r /mnt/usr/share/pixmaps
