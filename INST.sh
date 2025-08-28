@@ -22,7 +22,7 @@ makepkg -si --noconfirm
 
 #сновные пакеты 
 sudo pacman -Syy
-sudo pacman -S wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse gst-plugins-base gst-plugins-good   --noconfirm
+sudo pacman -S wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse gst-plugins-base gst-plugins-good dialog  --noconfirm
 sudo pacman -S gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
 
 
