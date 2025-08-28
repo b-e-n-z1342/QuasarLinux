@@ -36,7 +36,7 @@ function hypr() {
 }
 
 function plasma() {
-    sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc qt6 qt5 --noconfirm
+    sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc --noconfirm
     sleep 1
     sudo pacman -Rns discover
     
