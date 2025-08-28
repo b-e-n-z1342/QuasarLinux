@@ -52,13 +52,14 @@ function plasma() {
 }
 
 function mouse() {
-    sudo pacman -S  xfce4 xfce4-goodies thunar thunar-archive-plugin thunder-media-tags-plagin lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
+    sudo pacman -S  xfce4 thunar lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
     sudo rc-update add  lightdm default
 }
 
 function gnome() {
-    sudo pacman -S gnome gdm gdm-openrc  --noconfirm
-    sudo rc-update add  gdm default
+    sudo pacman -S gnome --noconfirm
+    sudo pacman -S gdm gdm-openrc  --noconfirm
+    sudo rc-update add gdm default
 }
 dialog --title "Меню" --menu "Выберите вариант:" 15 70 5 \
 1 "Hyprland" \
