@@ -615,13 +615,15 @@ case ${answer:0:1} in
         echo "OK"
     ;;
 esac
-
+[ -n "${SWAP_PART+x}" ] && swapoff "$SWAP_PART" 2>/dev/null
+pkill -KILL -u 0 2>/dev/null
+pkill -KILL -u root 2>/dev/null
 umount /mnt/etc/resolv.conf
 umount /mnt/proc
 umount /mnt/sys
 umount /mnt/dev
 umount /mnt/run
-
+umount -R /mnt 2>/dev/null || true
 # Размонтирование
 echo "Размонтирование разделов..."
 umount -R /mnt 2>/dev/null || true
