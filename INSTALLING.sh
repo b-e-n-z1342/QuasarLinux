@@ -579,7 +579,7 @@ sleep 2
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
 cp /root/QuasarLinux/INSTALL.sh /mnt/home/$USERNAME/
-cp /root/QuasaarLinux/INST.sh /mnt/home/$USERNAME/
+cp /root/QuasarLinux/INST.sh /mnt/home/$USERNAME/
 
 
 
