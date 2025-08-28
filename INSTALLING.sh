@@ -50,8 +50,25 @@ else
 fi
 
 echo "Форматирование ROOT: $ROOT_PART"
-mkfs.ext4 -F $ROOT_PART
+function ext() {
+    mkfs.ext4 -F $ROOT_PART
+}
 
+function btrfs() {
+    mkfs.btrfs -F $ROOT_PART
+}
+clear
+echo "Выберите ФС"
+echo "!! для syslinux лучше выбирать ext4 !! "
+echo ""
+echo "ext4  -- стабитальность"
+echo "btrfs -- снапшоты "
+read -p "[1-2]:  " fs
+case $fs in
+    1) ext ;;
+    2) btrfs ;;
+    *) echo "неверное число" ;;
+esac
 # Монтирование
 echo "Монтирование разделов..."
 mount $ROOT_PART /mnt
@@ -183,7 +200,7 @@ echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
 # Сеть
 echo "quasar-pc" > /etc/hostname
-cat > /etc/hosts << 'HOSTS_EOF'
+tee > /etc/hosts << 'HOSTS_EOF'
 127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 quasarlinux.localdomain quasarlinux
@@ -192,7 +209,7 @@ HOSTS_EOF
 pacman -S networkmanager networkmanager-openrc
 
 # Полный ребрендинг системы
-cat > /usr/lib/os-release << 'OS_EOF'
+tee > /usr/lib/os-release << 'OS_EOF'
 NAME="Quasar Linux"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=quasar
@@ -206,7 +223,7 @@ HOME_URL="https://b-e-n-z1342.github.io"
 LOGO=quasar-logo
 OS_EOF
 
-cat > /etc/lsb-release << 'LSB_EOF'
+tee > /etc/lsb-release << 'LSB_EOF'
 DISTRIB_ID=Quasar
 DISTRIB_RELEASE=1.0
 DISTRIB_DESCRIPTION="Quasar Linux"
@@ -233,15 +250,6 @@ clear
 sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
-
-
-
-
-
-
-
-
-
 gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
 if echo "\$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
@@ -423,14 +431,6 @@ default_selection "Quasar Linux"
 
 # Скрыть пользовательский интерфейс rEFInd
 hideui all
-
-# Показать определенные элементы
-showui banners,labels,bootprompt
-
-
-# Разрешение экрана
-resolution 1920x1080
-
 # Размер иконок
 icon_size 128
 
@@ -529,8 +529,8 @@ EOF
     2) efistub -- ЭКСПЕРИМЕНТАЛЬНО!
     3) rEFInd
     "
-    read -p "Какой ставить? [1-3]: " efi
-    case $efi in
+    read -p "Какой ставить? [1-3]: " boot
+    case $boot in
         1) grub ;;
         2) efistub ;;
         3) refind ;;
@@ -544,11 +544,12 @@ else
         artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
     }
     function syslinux() { 
-    artix-chroot /mnt pacman -S syslinux --noconfirm
-    artix-chroot /mnt extlinux --install /boot
-    artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
-    artix-chroot /mnt mkdir -p /boot/extlinux
-    artix-chroot /mnt tee /boot/extlinux/extlinux.conf << EOFD
+        artix-chroot /mnt pacman -S syslinux --noconfirm
+        artix-chroot /mnt mkdir -p /boot/extlinux
+        artix-chroot /mnt extlinux --install /boot/syslinux
+        artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
+        artix-chroot /mnt cp /usr/lib/syslinux/bios/*.c32 /boot/syslinux/
+        artix-chroot /mnt tee /boot/extlinux/syslinux.cfg << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
@@ -629,7 +630,7 @@ echo "      УСТАНОВКА QUASAR LINUX ЗАВЕРШЕНА!"
 echo "=========================================="
 echo "Базовая система успешно установлена!"
 echo "ЧТО БЫЛО УСТАНОВЛЕНО:"
-echo "- Загрузчик GRUB настроен и работает"
+echo "- Загрузчик $boot настроен и работает"
 echo "- Базовая система с консольными утилитами"
 echo "- Сетевые настройки (NetworkManager)"
 echo "- Пользователь: $USERNAME"
@@ -637,7 +638,7 @@ echo "СЛЕДУЮЩИЕ ШАГИ:"
 echo "1. Перезагрузите систему: reboot"
 echo "2. Войдите как пользователь: $USERNAME"
 echo "3. автоматом запустится пост установка"
-echo "4. Установите KDE Plasma и приложения"
+echo "4. Установите DE/WM и приложения"
 echo "ВНИМАНИЕ: Не забудьте извлечь установочный носитель!"
 echo "Добро пожаловать в Quasar Linux! 🚀"
 echo "=========================================="
