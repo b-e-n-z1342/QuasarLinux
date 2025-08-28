@@ -27,7 +27,6 @@ sudo pacman -S gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-m
 
 
 # установка DE
-printf '=%.0s' $(seq 1 $(tput cols))
 echo "Выберите DE или WM."
 function hypr() {
     sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland  --noconfirm
@@ -38,7 +37,7 @@ function hypr() {
 function plasma() {
     sudo pacman -S plasma konsole dolphin kate gwenview sddm sddm-openrc kcalc vlc --noconfirm
     sleep 1
-    sudo pacman -Rns discover
+    sudo pacman -Rns discover 2>/dev/null || true
     
     echo "Настройка SDDM..."
     sudo groupadd -f sddm
@@ -48,12 +47,12 @@ function plasma() {
     sudo chmod 0755 /var/lib/sddm /var/run/sddm
     sudo usermod -aG seat,video,input sddm
     sudo pacman -S --noconfirm plasma-localization-ru kde-l10n-ru
-    sudo rc-update sddm default
+    sudo rc-update add sddm default
 }
 
-function mouse() {
+function xfce4() {
     sudo pacman -S  xfce4 thunar lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
-    sudo rc-update add  lightdm default
+    sudo rc-update add lightdm default
 }
 
 function gnome() {
@@ -61,25 +60,43 @@ function gnome() {
     sudo pacman -S gdm gdm-openrc  --noconfirm
     sudo rc-update add gdm default
 }
-dialog --title "Меню" --menu "Выберите вариант:" 15 70 5 \
+de=$(dialog --title "Меню" --menu "Выберите DE/WM: " 15 70 5 \
 1 "Hyprland" \
 2 "KDE Plasma" \
 3 "Xfce4" \
-4 "Gnome" 2> /tmp/menu.txt
-
+4 "Gnome" 3>&1 1>&2 2>&3)
 # Проверяем, не нажал ли пользователь Cancel или ESC
 if [ $? -ne 0 ]; then
     clear
     echo "пропускаем"
+    rm -f /tmp/menu.txt    
 fi
 
 de=$(cat /tmp/menu.txt)
+echo "Выбран вариант: $de"  # Отладка
+
 case $de in
-    1) hypr ;;
-    2) plasma ;;
-    3) mouse ;;
-    4) gnome ;;
+    1) 
+        echo "Запуск Hyprland..."
+        hypr 
+        ;;
+    2) 
+        echo "Запуск Plasma..."
+        plasma 
+        ;;
+    3) 
+        echo "Запуск Xfce4..."
+        xfce4 
+        ;;
+    4) 
+        echo "Запуск Gnome..."
+        gnome 
+        ;;
+    *)
+        echo "Неверный выбор: $de"
+        ;;
 esac
+
 clear
 # Очищаем временный файл
 rm -f /tmp/menu.txt
@@ -139,8 +156,24 @@ function ge() {
     sleep 1
     cd ~/.apps
     mv lutris-GE-Proton8-26-x86_64 wine-ge
-    sudo ln -s wine-ge/bin/* /usr/local/bin
-    sudo ln -s wine-ge/share/* /usr/local/share
+    for file in wine-ge/bin/*; do
+        if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            ln -sf "$(pwd)/$file" ~/.local/bin/"$filename"
+            chmod +x ~/.local/bin/"$filename"  # Даем права на выполнение
+        fi
+    done
+    chmod +x ~/.apps/wine-ge/bin/*
+    find ~/.apps/wine-ge -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+    sudo mkdir -p /usr/local/share
+    sudo cp -rsf wine-ge/share/* /usr/local/share/
+    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+        echo 'export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"' >> ~/.bashrc
+        echo "Добавлено в PATH. Перезапустите терминал или выполните: source ~/.bashrc"
+    fi
+    export PATH="$HOME/.local/bin:$PATH"
+    export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
     sleep 1 
     wineboot --init
 }
