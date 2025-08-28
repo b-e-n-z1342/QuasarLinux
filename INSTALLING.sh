@@ -55,14 +55,14 @@ function ext() {
 }
 
 function btrfs() {
-    mkfs.btrfs -F $ROOT_PART
+    mkfs.btrfs $ROOT_PART
 }
 clear
 echo "Выберите ФС"
 echo "!! для syslinux лучше выбирать ext4 !! "
 echo ""
 echo "ext4  -- стабитальность"
-echo "btrfs -- снапшоты "
+echo "btrfs -- снапшоты  "
 read -p "[1-2]:  " fs
 case $fs in
     1) ext ;;
@@ -93,7 +93,7 @@ clear
 echo "Продолжаем установку системы..."
 # Установка базовой системы
 echo "Установка базовой системы..."
-basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano ntfs-3g dosfstools dhcpcd mc htop wget curl git terminus-font pciutils vim dialog
+basestrap /mnt base base-devel openrc elogind-openrc mkinitcpio linux-zen linux-zen-headers dkms dbus dbus-openrc sudo nano ntfs-3g dosfstools dhcpcd mc htop wget curl git terminus-font pciutils vim dialog acpid
 
 # Копирование дополнительных файлов
 [ -d /mnt/usr/share/pixmaps ] && rm -r /mnt/usr/share/pixmaps
@@ -544,6 +544,8 @@ else
         artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
     }
     function syslinux() { 
+        BOOT_NUMBER=$(echo $BOOT_PART | sed 's/.*[^0-9]\([0-9]\+\)$/\1/')
+        parted $DISK set $BOOT_NUMBER boot on
         artix-chroot /mnt pacman -S syslinux --noconfirm
         artix-chroot /mnt mkdir -p /boot/extlinux
         artix-chroot /mnt extlinux --install /boot/syslinux
