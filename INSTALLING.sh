@@ -544,7 +544,7 @@ EOF
            2 "efistub" \
            3 "refind" 2>/tmp/bootloader.choice
 
-    boot=$(cat /tmp/bootloader.chice) 
+    boot=$(cat /tmp/bootloader.choice)
     case $boot in
         1) grub ;;
         2) efistub ;;
@@ -583,7 +583,7 @@ EOFD
            1 "grub" \
            2 "syslinux" 2>/tmp/bootloader.choice
 
-    boot=$(cat /tmp/bootloader.chice) 
+    boot=$(cat /tmp/bootloader.choice) 
     case $boot in
         1) grub ;;
         2) syslinux ;;
