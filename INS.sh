@@ -58,7 +58,7 @@ function install_system() {
 echo "что вы хотить сделать?"
 echo "1) Chroot"
 echo "2) установка "
-read -p "выберите [1-2]" ins
+read -p "выберите [1-2]: " ins
 case $ins in
     1) chroot_recovery ;;
     2) install_system ;;
