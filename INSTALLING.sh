@@ -553,7 +553,7 @@ EOF
 else
     function grub() {
         artix-chroot /mnt pacman -S grub os-prober --noconfirm
-        artix-chroot /mnt grub-install --target=i386-pc --boot-directory=/boot --recheck /dev/"$DISK"
+        artix-chroot /mnt grub-install --target=i386-pc --boot-directory=/boot --recheck "$DISK"
         artix-chroot /mnt sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="Quasar Linux"/' /etc/default/grub || echo 'GRUB_DISTRIBUTOR="Quasar Linux"' >> /etc/default/grub
         artix-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
     }
@@ -563,7 +563,7 @@ else
         artix-chroot /mnt pacman -S syslinux --noconfirm
         artix-chroot /mnt mkdir -p /boot/extlinux
         artix-chroot /mnt extlinux --install /boot/syslinux
-        artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of=/dev/"$DISK" bs=440 count=1 conv=notrunc
+        artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of="$DISK" bs=440 count=1 conv=notrunc
         artix-chroot /mnt cp /usr/lib/syslinux/bios/*.c32 /boot/syslinux/
         artix-chroot /mnt tee /boot/extlinux/syslinux.cfg << EOFD
 DEFAULT Quasarlinux
