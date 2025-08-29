@@ -26,7 +26,39 @@ echo "======================="
 # Выбор раздела под корень /
 read -p "Введите раздел для ROOT (например, sda2): " ROOT_PART
 ROOT_PART="/dev/$ROOT_PART"
-
+function home_part() {
+    read -p "Введите раздел для HOME (например, sda2): " HOME_PART
+    HOME_PART="/dev/$HOME_PART"
+    [ ! -e "$HOME_PART" ] && echo "Ошибка: $HOME_PART не существует!" && exit 1
+    format_home_ext() {
+        mkfs.ext4 -F "$HOME_PART"
+    }
+    format_home_btrfs() {
+        mkfs.btrfs -f "$HOME_PART"
+    }
+    echo "Выберите Файловую систему для /home
+    1) ext4
+    2) btrfs
+    "
+    read -p "Выберите [1-2]: " format_home
+    case $format_home in
+        1) format_home_ext ;;
+        2) format_home_btrfs ;;
+        *) echo "Неверное число" ;;
+    esac
+}
+function non_home() {
+    echo "OK"
+}
+echo "/home отдельный раздел?"
+echo "1) да
+2) нет"
+read -p "выберите [1-2]: " home_parted_use
+case $home_parted_use in
+    1) home_part ;;
+    2) non_home ;;
+    *) echo "неверный выбор, попробуйте ещё раз" ;;
+esac
 if [ $UEFI_MODE -eq 1 ]; then
     read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
     BOOT_PART="/dev/$BOOT_PART"
@@ -55,23 +87,32 @@ function ext() {
 }
 
 function btrfs() {
-    mkfs.btrfs $ROOT_PART
+    mkfs.btrfs -f $ROOT_PART
 }
 clear
 echo "Выберите ФС"
 echo "!! для syslinux лучше выбирать ext4 !! "
 echo ""
-echo "ext4  -- стабитальность"
-echo "btrfs -- снапшоты  "
+echo "1) ext4  -- стабитальность"
+echo "2) btrfs -- снапшоты  "
 read -p "[1-2]:  " fs
 case $fs in
     1) ext ;;
     2) btrfs ;;
     *) echo "неверное число" ;;
 esac
+
 # Монтирование
 echo "Монтирование разделов..."
 mount $ROOT_PART /mnt
+
+if [ -n "$HOME_PART" ] && [ -b "$HOME_PART" ]; then
+    mkdir -p /mnt/home
+    mount "$HOME_PART" /mnt/home && echo "Смонтировано успешно"
+else 
+    echo ""
+fi
+
 
 if [ $UEFI_MODE -eq 1 ]; then
     mkdir -p /mnt/boot/efi
@@ -157,6 +198,31 @@ mkdir -p /mnt/etc
 fstabgen -U /mnt >> /mnt/etc/fstab
 cp /etc/pacman.conf /mnt/etc/
 clear
+
+
+printf '=%.0s' $(seq 1 $(tput cols))
+fdisk -l "$DISK" | grep "^/dev"
+swap_on() {
+    echo "!!! /dev водить не надо, а надо сразу sda/vda !!!"
+    read -p "выберите раздел swap [sda/vda]: " swap_on_parted
+    mkswap "/dev/$swap_on_parted"
+    echo "/dev/$swap_on_parted none swap sw 0 0" | sudo tee -a /mnt/etc/fstab
+}
+swap_off() {
+    echo ""
+}
+echo "!! для swap нужно на этапе сразметкой сделать раздел swap через cfdisk !!"
+echo "
+установить swap на раздел?
+1) да 
+2) нет
+"
+read -p "" swap_read
+case $swap_read in
+    1) swap_on ;;
+    2) swap_off ;;
+    *) echo "ошибка, попробуйте ещё раз" ;;
+esac
 # Создание пользователя
 printf '=%.0s' $(seq 1 $(tput cols))
 read -p "Введите имя нового пользователя: " USERNAME
@@ -414,9 +480,6 @@ sleep 5
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
 artix-chroot /mnt pacman -Syy
-
-mkinitcpio -P
-
 ROOT_UUID=$(blkid -s UUID -o value "$ROOT_PART")
 export ROOT_UUID
 if [ "$UEFI_MODE" -eq 1 ]; then
@@ -563,8 +626,8 @@ else
         artix-chroot /mnt pacman -S syslinux --noconfirm
         artix-chroot /mnt mkdir -p /boot/syslinux
         artix-chroot /mnt extlinux --install /boot/syslinux
-        artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of="$DISK" bs=440 count=1 conv=notrunc
         artix-chroot /mnt cp /usr/lib/syslinux/bios/*.c32 /boot/syslinux/
+        artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of="$DISK" bs=440 count=1 conv=notrunc
         artix-chroot /mnt tee /boot/extlinux/syslinux.cfg << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
@@ -622,11 +685,11 @@ chown $USERNAME:$USERNAME /mnt/home/$USERNAME/.apps
 artix-chroot /mnt sh -c 'echo "Welcome to QuasarLinux" > /etc/motd'
 artix-chroot /mnt mkinitcpio -P
 sleep 2
-# artix-chroot /mnt git clone https://github.com/b-e-n-z1342/systemd-rc
-# artix-chroot /mnt chmod +x /systemd-rc/install
-# cp -r /mnt/systemd-rc /mnt/home/$USERNAME/.apps
-# artix-chroot /mnt /home/$USERNAME/.apps/systemd-rc/install
-
+# artix-chroot /mnt git clone https://github.com/b-e-n-z1342/Systemd-rc
+# artix-chroot /mnt chmod +x /Systemd-rc/install
+# cp -r /mnt/Systemd-rc /mnt/home/$USERNAME/.apps
+# artix-chroot /mnt /home/$USERNAME/.apps/Systemd-rc/install
+clear
 read -p "Вы хотите зайти в chroot? (Y/n): " answer
 case ${answer:0:1} in
     y|Y|"")
