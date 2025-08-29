@@ -535,18 +535,20 @@ bootprompt_message "Нажмите любую клавишу для меню з�
 
 EOF
     }
-    echo "Выберите загрузчик для EFI"
-    echo "
-    1) grub2 --рекомендуется из-за стабильности
-    2) efistub -- ЭКСПЕРИМЕНТАЛЬНО!
-    3) rEFInd
-    "
-    read -p "Какой ставить? [1-3]: " boot
+
+    dialog --title "Выбор варианта" \
+           --ok-label "Выбрать" \
+           --no-cancel \
+           --menu "Выберите опцию:" 15 40 4 \
+           1 "grub" \
+           2 "efistub" \
+           3 "refind" 2>/tmp/bootloader.choice
+
+    boot=$(cat /tmp/bootloader.chice) 
     case $boot in
         1) grub ;;
         2) efistub ;;
         3) refind ;;
-        *) echo "Неверный выбор, попробуйте ещё раз."
     esac
 else
     function grub() {
@@ -574,16 +576,17 @@ LABEL Quasarlinux
     INITRD /initramfs-linux-zen.img
 EOFD
     }
-    echo "выберите загрузчик"
-    echo "
-    1) grub
-    2) syslinux -- ЭКСПЕРИМЕНТАЛЬНО!
-    "
-    read -p "какой ставить? [1-2]: " boot
+    dialog --title "Выбор варианта" \
+           --ok-label "Выбрать" \
+           --no-cancel \
+           --menu "Выберите опцию:" 15 40 4 \
+           1 "grub" \
+           2 "syslinux" 2>/tmp/bootloader.choice
+
+    boot=$(cat /tmp/bootloader.chice) 
     case $boot in
         1) grub ;;
         2) syslinux ;;
-        *) echo "неверное число, попробуйте ещё раз." ;;
     esac
 fi
 
