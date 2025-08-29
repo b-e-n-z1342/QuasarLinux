@@ -250,35 +250,47 @@ clear
 sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
-gpu_info=\$(lspci -nn | grep -i 'VGA\|3D\|Display')
-if echo "\$gpu_info" | grep -qi "AMD"; then
+gpu_info=$(lspci -nn | grep -i 'VGA\|3D\|Display' | head -1)  # Берем только первую видеокарту
+
+if echo "$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
-    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau linux-firmware-amdgpu
-elif echo "\$gpu_info" | grep -qi "Intel"; then
+    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau
+elif echo "$gpu_info" | grep -qi "Intel"; then
     echo "Обнаружена видеокарта Intel"
-    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver linux-firmware-intel
-elif echo "\$gpu_info" | grep -qi "NVIDIA"; then
+    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver
+elif echo "$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
-    echo "!!! NVIDIA драйвера могут буть не стабильны и иметь проблемы с Wayland !!!"
+    echo "!!! NVIDIA драйвера могут быть не стабильны и иметь проблемы с Wayland !!!"
     sleep 5
-    pacman -S --noconfirm nvidia nvidia-utils lib32-nvidia-utils linux-firmware-nvidia
-elif echo "\$gpu_info" | grep -qi "QXL"; then
-    pacman -S qemu-guest-agent qemu-guest-agent-openrc --noconfirm
-    rc-update add qemu-guest-agent default
-elif echo "\$gpu_info" | grep -qi "Virtio"; then
-    pacman -S --needed qemu-hw-display-virtio-gpu qemu-hw-display-virtio-gpu-gl qemu-hw-display-virtio-gpu-pci qemu-hw-display-virtio-gpu-pci-gl qemu-hw-display-virtio-gpu-pci-rutabaga qemu-hw-display-virtio-gpu-rutabaga --noconfirm
-    pacman -S --needed qemu-hw-display-virtio-vga qemu-hw-display-virtio-vga-gl qemu-hw-display-virtio-vga-rutabaga qemu-hw-s390x-virtio-gpu-ccw virtiofsd vulkan-virtio lib32-vulkan-virtio --noconfirm
-    rc-update add qemu-guest-agent default 
+    pacman -S --noconfirm nvidia nvidia-utils nvidia-settings lib32-nvidia-utils
+elif echo "$gpu_info" | grep -qi "QXL"; then
+    echo "Обнаружена виртуальная видеокарта QXL (QEMU)"
+    pacman -S --noconfirm xf86-video-qxl mesa
+    # Установка гостевых утилит для QEMU
+    if command -v rc-update &> /dev/null; then
+        pacman -S --noconfirm qemu-guest-agent
+        rc-update add qemu-guest-agent default
+    fi
+elif echo "$gpu_info" | grep -qi "Virtio"; then
+    echo "Обнаружена виртуальная видеокарта Virtio (QEMU/KVM)"
+    pacman -S --noconfirm xf86-video-virtio mesa
+    # Установка гостевых утилит для Virtio
+    if command -v rc-update &> /dev/null; then
+        pacman -S --noconfirm qemu-guest-agent
+        rc-update add qemu-guest-agent default
+    fi
 else
     echo "Видеокарта не определена, устанавливаю базовые драйверы"
-    echo "осторожно низкая производительность!"
-    sleep 5
-    pacman -S --noconfirm mesa
+    echo "Осторожно: низкая производительность!"
+    sleep 3
+    pacman -S --noconfirm mesa xf86-video-vesa xf86-video-fbdev
 fi
 
+# Установка общих firmware пакетов
+pacman -S --noconfirm linux-firmware
+
 # Установка базовых системных пакетов
-echo "Установка системных пакетов..."
-pacman -S --noconfirm xorg alsa-utils kbd pipewire pipewire-alsa pipewire-pulse acpid
+pacman -S vim nano git curl wget 
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
@@ -602,9 +614,15 @@ if [ ! -f ~/.Quasar_post_done ]; then
     touch ~/.Quasar_post_done
 fi
 EOF
+mkdir /mnt/home/$USERNAME/.apps
+chown $USERNAME:$USERNAME /mnt/home/$USERNAME/.apps
 artix-chroot /mnt sh -c 'echo "Welcome to QuasarLinux" > /etc/motd'
 artix-chroot /mnt mkinitcpio -P
 sleep 2
+# artix-chroot /mnt git clone https://github.com/b-e-n-z1342/systemd-rc
+# artix-chroot /mnt chmod +x /systemd-rc/install
+# cp -r /mnt/systemd-rc /mnt/home/$USERNAME/.apps
+# artix-chroot /mnt /home/$USERNAME/.apps/systemd-rc/install
 
 read -p "Вы хотите зайти в chroot? (Y/n): " answer
 case ${answer:0:1} in
