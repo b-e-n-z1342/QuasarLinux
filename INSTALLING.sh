@@ -430,7 +430,7 @@ if [ "$UEFI_MODE" -eq 1 ]; then
     function efistub() {
         artix-chroot /mnt pacman -S efibootmgr os-prober --noconfirm
         artix-chroot /mnt efibootmgr -b 0000 -B
-        artix-chroot /mnt cp /boot/vmlinuz-linux-zen /boot/efi/vmlinuz-linux-zen.EFI
+        artix-chroot /mnt cp /boot/vmlinuz-linux-zen /boot/efi/vmlinuz-linux-zen.efi
         artix-chroot /mnt cp /boot/initramfs-linux-zen.img /boot/efi/initramfs-linux-zen.img
         artix-chroot /mnt efibootmgr -c -d "$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen.efi' -u 'root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img'
     }
@@ -561,7 +561,7 @@ else
         BOOT_NUMBER=$(echo $BOOT_PART | sed 's/.*[^0-9]\([0-9]\+\)$/\1/')
         parted $DISK set $BOOT_NUMBER boot on
         artix-chroot /mnt pacman -S syslinux --noconfirm
-        artix-chroot /mnt mkdir -p /boot/extlinux
+        artix-chroot /mnt mkdir -p /boot/syslinux
         artix-chroot /mnt extlinux --install /boot/syslinux
         artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of="$DISK" bs=440 count=1 conv=notrunc
         artix-chroot /mnt cp /usr/lib/syslinux/bios/*.c32 /boot/syslinux/
