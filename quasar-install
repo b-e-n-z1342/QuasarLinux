@@ -1,35 +1,183 @@
 #!/bin/bash
 # quasar-install - Official Quasar Linux Installer
 
-# Проверка на Live-систему
-if ! grep -q "QuasarLinux" /etc/os-release 2>/dev/null; then
-    echo "Ошибка: Эта утилита должна запускаться только с Live-системы Quasar Linux!"
-    exit 1
-fi
+set -e  # Завершать скрипт при любой ошибке
 
-# Проверка интернета
-if ! ping -c 1 google.com &> /dev/null; then
-    echo "Ошибка: Требуется интернет-соединение!"
-    echo "Проверьте: rfkill unblock wifi && connmanctl"
-    exit 1
-fi
-# Клонирование репозитория
-REPO_URL="https://github.com/b-e-n-z1342/QuasarLinux.git"
-CLONE_DIR="$HOME/QuasarLinux"
+# Цвета для вывода
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-echo "Клонирование репозитория Quasar Linux..."
-git clone "$REPO_URL" "$CLONE_DIR" || {
-    echo "Ошибка клонирования! Проверьте URL и доступ в интернет."
-    exit 1
+# Функции для вывода сообщений
+error() {
+    echo -e "${RED}[ОШИБКА]${NC} $1"
 }
 
-# Запуск установщика
-cd "$CLONE_DIR" || exit 1
+success() {
+    echo -e "${GREEN}[УСПЕХ]${NC} $1"
+}
 
-if [ -f "INS.sh" ]; then
-    echo "Запуск установщика..."
-    sudo bash INS.sh
-else
-    echo "Ошибка: INS.sh не найден в репозитории!"
-    exit 1
-fi
+info() {
+    echo -e "${YELLOW}[ИНФО]${NC} $1"
+}
+
+question() {
+    echo -e "${BLUE}[ВОПРОС]${NC} $1"
+}
+
+# Проверка интернет-соединения
+check_internet() {
+    info "Проверка интернет-соединения..."
+    if ping -c 1 -W 3 8.8.8.8 &> /dev/null || ping -c 1 -W 3 google.com &> /dev/null; then
+        success "Интернет-соединение активно"
+        return 0
+    else
+        error "Нет интернет-соединения!"
+        return 1
+    fi
+}
+
+# Подключение к Wi-Fi через NetworkManager
+connect_to_wifi() {
+    info "Попытка подключения к Wi-Fi..."
+    
+    # Проверяем, установлен ли NetworkManager
+    if ! command -v nmcli &> /dev/null; then
+        error "NetworkManager не установлен. Пытаемся установить..."
+        sudo pacman -Sy --noconfirm networkmanager
+    fi
+    
+    # Запускаем NetworkManager если не запущен
+    if ! systemctl is-active --quiet NetworkManager; then
+        sudo systemctl start NetworkManager
+        sleep 3
+    fi
+    
+    # Включаем Wi-Fi
+    sudo nmcli radio wifi on
+    sleep 2
+    
+    # Сканируем доступные сети
+    info "Сканирование доступных Wi-Fi сетей..."
+    sudo nmcli dev wifi rescan
+    sleep 3
+    
+    # Получаем список сетей
+    question "Доступные Wi-Fi сети:"
+    sudo nmcli --fields SSID,SECURITY,SIGNAL dev wifi list | head -n 20
+    
+    # Запрашиваем данные для подключения
+    echo
+    question "Введите имя сети (SSID):"
+    read -r ssid
+    
+    # Проверяем, существует ли сеть
+    if ! sudo nmcli --fields SSID dev wifi list | grep -q "$ssid"; then
+        error "Сеть '$ssid' не найдена!"
+        return 1
+    fi
+    
+    # Проверяем, требует ли сеть пароль
+    security=$(sudo nmcli --fields SSID,SECURITY dev wifi list | grep "$ssid" | head -1 | awk '{for(i=2;i<=NF;i++) printf $i" "; print ""}' | xargs)
+    
+    if [ "$security" != "--" ] && [ -n "$security" ]; then
+        question "Введите пароль для сети '$ssid':"
+        read -rs password
+        echo
+    else
+        password=""
+        info "Сеть открытая, пароль не требуется"
+    fi
+    
+    # Пытаемся подключиться
+    info "Подключаемся к сети '$ssid'..."
+    if [ -n "$password" ]; then
+        connect_result=$(sudo nmcli dev wifi connect "$ssid" password "$password" 2>&1)
+    else
+        connect_result=$(sudo nmcli dev wifi connect "$ssid" 2>&1)
+    fi
+    
+    if echo "$connect_result" | grep -q "successfully activated"; then
+        success "Успешно подключено к $ssid"
+        
+        # Даем время для получения IP-адреса
+        sleep 5
+        
+        # Проверяем соединение
+        if check_internet; then
+            return 0
+        else
+            error "Подключение установлено, но нет доступа в интернет"
+            return 1
+        fi
+    else
+        error "Не удалось подключиться к $ssid"
+        echo "Ошибка: $connect_result"
+        return 1
+    fi
+}
+
+# Установка необходимых зависимостей
+install_dependencies() {
+    info "Установка необходимых пакетов..."
+    sudo pacman -Sy --noconfirm git base-devel
+}
+
+# Основная логика
+main() {
+    
+    # Проверяем интернет и предлагаем подключиться если нет
+    if ! check_internet; then
+        question "Хотите подключиться к Wi-Fi? (y/N)"
+        read -r response
+        if [[ "$response" =~ ^[YyДд] ]]; then
+            if connect_to_wifi; then
+                success "Подключение к Wi-Fi установлено"
+            else
+                error "Не удалось подключиться к Wi-Fi"
+                exit 1
+            fi
+        else
+            error "Требуется интернет-соединение для продолжения!"
+            exit 1
+        fi
+    fi
+    
+    install_dependencies
+
+    REPO_URL="https://github.com/b-e-n-z1342/QuasarLinux.git"
+    CLONE_DIR="$HOME/QuasarLinux"
+
+    # Очистка предыдущего клонирования (если существует)
+    if [ -d "$CLONE_DIR" ]; then
+        info "Удаление предыдущей копии репозитория..."
+        sudo rm -rf "$CLONE_DIR"
+    fi
+
+    info "Клонирование репозитория Quasar Linux..."
+    if git clone "$REPO_URL" "$CLONE_DIR"; then
+        success "Репозиторий успешно склонирован"
+    else
+        error "Ошибка клонирования! Проверьте URL и доступ в интернет."
+        exit 1
+    fi
+
+    cd "$CLONE_DIR" || exit 1
+
+    if [ -f "INS.sh" ]; then
+        info "Запуск установщика..."
+        chmod +x INS.sh
+        sudo ./INS.sh
+    else
+        error "INS.sh не найден в репозитории!"
+        exit 1
+    fi
+}
+
+# Обработка прерывания скрипта (Ctrl+C)
+trap 'error "Скрипт прерван пользователем"; exit 1' INT
+
+# Запуск основной функции
+main "$@"
