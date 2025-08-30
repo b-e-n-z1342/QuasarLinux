@@ -14,7 +14,7 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     echo "Отмена установки"
     exit 0
 fi
-mkdir ~/.apps
+sudo pacman -S go
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
@@ -22,14 +22,14 @@ makepkg -si --noconfirm
 
 #сновные пакеты 
 sudo pacman -Syy
-sudo pacman -S wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins go lib32-libpulse gst-plugins-base gst-plugins-good dialog  --noconfirm
-sudo pacman -S gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
+sudo pacman -S --needed wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins lib32-libpulse gst-plugins-base gst-plugins-good dialog  --noconfirm
+sudo pacman -S --needed gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
 
 
 # установка DE
 echo "Выберите DE или WM."
 function hypr() {
-    sudo pacman -S hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland  --noconfirm
+    sudo pacman -S --needed hyprland waybar rofi kitty ly ly-openrc hyprland-protocols hyprgraphics hypridle hyprcursor hyprland-qt-support hyprutils xdg-desktop-portal-hyprland  --noconfirm
     
     sudo rc-update add ly default
 }
@@ -51,13 +51,14 @@ function plasma() {
 }
 
 function xfce4() {
-    sudo pacman -S  xfce4 thunar lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
+    sudo pacman -S --needed xfce4 thunar lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
     sudo rc-update add lightdm default
 }
 
 function gnome() {
-    sudo pacman -S gnome --noconfirm
-    sudo pacman -S gdm gdm-openrc  --noconfirm
+    sudo pacman -S --needed --noconfirm gnome-shell gdm nautilus gnome-control-center gnome-terminal 
+    sudo pacman -S --needed gnome gnome-extra --noconfirm
+    sudo pacman -S --needed gdm gdm-openrc  --noconfirm
     sudo rc-update add gdm default
 }
 dialog --title "Меню" --menu "Выберите DE/WM: " 15 70 5 \
@@ -167,13 +168,13 @@ function ge() {
     find ~/.apps/wine-ge -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
     sudo mkdir -p /usr/local/share
     sudo cp -rsf wine-ge/share/* /usr/local/share/
-    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-        echo 'export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"' >> ~/.bashrc
+    if [[ ":$PATH:" != *":$HOME/.apps/wine-ge/bin:"* ]]; then
+        echo 'export PATH="$HOME/.apps/wine-ge/bin:$PATH"' >> ~/.bashrc
+        echo 'export XDG_DATA_DIRS="$HOME/.apps/wine-ge/share:$XDG_DATA_DIRS"' >> ~/.bashrc
         echo "Добавлено в PATH. Перезапустите терминал или выполните: source ~/.bashrc"
     fi
-    export PATH="$HOME/.local/bin:$PATH"
-    export XDG_DATA_DIRS="$HOME/.local/share:$XDG_DATA_DIRS"
+    export PATH="$HOME/.apps/wine-ge/bin:$PATH"
+    export XDG_DATA_DIRS="$HOME/.apps/wine-ge/share:$XDG_DATA_DIRS"
     sleep 1 
     wineboot --init
 }
@@ -196,10 +197,10 @@ echo "Выберите вариант:"
 echo "1) обычный wine"
 echo "2) wine-staging"
 echo "3) wine-staging настроенный для QuasarLinux"
-echo "4) wine-ge"
-echo "5) proton-ge"
-echo "6) PortProton --рекомендуется новичкам"
-echo "7) без wine"
+echo "4) wine-ge            --для игр"
+echo "5) proton-ge          --эксперементально"
+echo "6) PortProton         --рекомендуется новичкам"
+echo "7) без wine           --рекомендуется для виртуальных машин"
 read -p "Введите номер (1-6): " choice
 
 case $choice in
@@ -248,7 +249,7 @@ echo "это -- блокировка телеметрии"
 echo "около 60-80% системы без телеметрии, к релизу будет 90-99%"
 echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
 
-sleep 7
+sleep 5
 
 sudo tee /etc/host << 'EOF'
 0.0.0.0 vortex.data.microsoft.com
@@ -272,12 +273,8 @@ sudo tee /etc/host << 'EOF'
 0.0.0.0 mc.yandex.ru
 0.0.0.0 dsp.yandex.ru
 EOF
-echo "блокитровка завершена! все эти домены можно востановить если поставить перед ними : # : всё заблокированное находится в /etc/host."
-
-
-
-
-
+echo "блокировка завершена! все эти домены можно востановить если поставить перед ними : # : всё заблокированное находится в /etc/host."
+sleep 5
 # Активация 
 sudo usermod -aG elogind $(whoami)
 clear
