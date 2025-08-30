@@ -60,11 +60,11 @@ function gnome() {
     sudo pacman -S gdm gdm-openrc  --noconfirm
     sudo rc-update add gdm default
 }
-de=$(dialog --title "Меню" --menu "Выберите DE/WM: " 15 70 5 \
+dialog --title "Меню" --menu "Выберите DE/WM: " 15 70 5 \
 1 "Hyprland" \
 2 "KDE Plasma" \
 3 "Xfce4" \
-4 "Gnome" 3>&1 1>&2 2>&3)
+4 "Gnome" 2>/tmp/menu.txt
 # Проверяем, не нажал ли пользователь Cancel или ESC
 if [ $? -ne 0 ]; then
     clear
