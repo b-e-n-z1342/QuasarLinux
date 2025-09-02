@@ -624,11 +624,11 @@ else
         BOOT_NUMBER=$(echo $BOOT_PART | sed 's/.*[^0-9]\([0-9]\+\)$/\1/')
         parted $DISK set $BOOT_NUMBER boot on
         artix-chroot /mnt pacman -S syslinux --noconfirm
-        artix-chroot /mnt mkdir -p /boot/syslinux
+        mkdir -p /mnt/boot/syslinux
         artix-chroot /mnt extlinux --install /boot/syslinux
-        artix-chroot /mnt cp /usr/lib/syslinux/bios/*.c32 /boot/syslinux/
+        cp /mnt/usr/lib/syslinux/bios/*.c32 /mnt/boot/syslinux/
         artix-chroot /mnt dd if=/usr/lib/syslinux/bios/mbr.bin of="$DISK" bs=440 count=1 conv=notrunc
-        artix-chroot /mnt tee /boot/extlinux/syslinux.cfg << EOFD
+        artix-chroot /mnt tee /boot/syslinux/syslinux.cfg << EOFD
 DEFAULT Quasarlinux
 PROMPT 0
 TIMEOUT 50
