@@ -14,7 +14,7 @@ if [[ ! "$start_install" =~ ^[Yy]$ ]]; then
     echo "Отмена установки"
     exit 0
 fi
-sudo pacman -S go
+sudo pacman -S go --noconfirm
 git clone https://aur.archlinux.org/yay-bin
 cd yay-bin
 makepkg -si --noconfirm
@@ -56,8 +56,7 @@ function xfce4() {
 }
 
 function gnome() {
-    sudo pacman -S --needed --noconfirm gnome-shell gdm nautilus gnome-control-center gnome-terminal 
-    sudo pacman -S --needed gnome gnome-extra --noconfirm
+    sudo pacman -S --needed --noconfirm gnome-shell gnome nautilus gnome-control-center gnome-terminal 
     sudo pacman -S --needed gdm gdm-openrc  --noconfirm
     sudo rc-update add gdm default
 }
@@ -124,22 +123,22 @@ EOF
 clear
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install flathub -y
+# flatpak install flathub -y
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка Wine"
 echo "Wine -- это не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
 echo "но у него есть куча версий! какую ставить ?"
 
 function wine() {
-    sudo pacman -S wine wine-gecko winetricks  --noconfirm
+    sudo pacman -S wine winetricks  --noconfirm
 }
 
 function staging() {
-    sudo pacman -S wine-staging wine-gecko winetricks  --noconfirm
+    sudo pacman -S wine-staging winetricks  --noconfirm
 }
 
 function quasar() {
-    sudo pacman -S wine-staging winetricks wine-gecko gamemode --noconfirm
+    sudo pacman -S wine-staging winetricks gamemode --noconfirm
     wineboot --init
     sleep 2
     clear
@@ -311,7 +310,7 @@ sudo rc-update add pipewire-pulse default
 
 sudo cat << 'EOF' > /etc/os-release
 NAME="QuasarLinux"
-VERSION="0.2-BETA"
+VERSION="0.5-BETA.1"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=QuasarLinux
 ID_LIKE=artix
@@ -368,50 +367,36 @@ EOF
 
 function option2() {
     flatpak install flathub org.chromium.Chromium
-    cat /usr/local/bin/chromium << EOS
-flatpak run org.chromium.Chromium
-EOS
+
 }
 
 function option3() {
     flatpak install flathub com.brave.Browser
-    cat /usr/local/bin/chromium << EOS
-flatpak run org.chromium.Chromium
-EOS
+
 }
 function option4() {
     flatpak install flathub io.github.ungoogled_software.ungoogled_chromium
-        cat /usr/local/bin/chromium << EOS
-flatpak run io.github.ungoogled_software.ungoogled_chromium
-EOS
+
 }
 
 function option5() {
     flatpak install flathub io.gitlab.librewolf-community
-        cat /usr/local/bin/librewolf-community<< EOS
-flatpak run io.gitlab.librewolf-community
-EOS
+
 }
 
 function option6() {
     flatpak install flathub com.github.micahflee.torbrowser-launcher
-        cat /usr/local/bin/torbrowser-launcher << EOS
-flatpak run org.torproject.torbrowser-launcher
-EOS
+
 }
 
 function option7() {
     flatpak install flathub ru.yandex.Browser
-        cat /usr/local/bin/Yandex.Browser << EOS
-flatpak run ru.yandex.Browser
-EOS
+
 }
 
 function option8() {
     flatpak install flathub org.kde.falkon
-    cat /usr/local/bin/falkon << EOS
-flatpak run org.kde.falkon
-EOS
+
 }
 
 function option9() {
