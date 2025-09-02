@@ -308,7 +308,7 @@ EOF
         
 sudo cat > /etc/lsb-release << 'LSB_EOF'
 DISTRIB_ID=Quasar
-DISTRIB_RELEASE=0.3
+DISTRIB_RELEASE=0.5
 DISTRIB_DESCRIPTION="Quasar Linux"
 DISTRIB_CODENAME=rolling
 LSB_EOF
