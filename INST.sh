@@ -156,22 +156,6 @@ function ge() {
     sleep 1
     cd ~/.apps
     mv lutris-GE-Proton8-26-x86_64 wine-ge
-    for file in wine-ge/bin/*; do
-        if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            ln -sf "$(pwd)/$file" ~/.local/bin/"$filename"
-            chmod +x ~/.local/bin/"$filename"  # Даем права на выполнение
-        fi
-    done
-    chmod +x ~/.apps/wine-ge/bin/*
-    find ~/.apps/wine-ge -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
-    sudo mkdir -p /usr/local/share
-    sudo cp -rsf wine-ge/share/* /usr/local/share/
-    if [[ ":$PATH:" != *":$HOME/.apps/wine-ge/bin:"* ]]; then
-        echo 'export PATH="$HOME/.apps/wine-ge/bin:$PATH"' >> ~/.bashrc
-        echo 'export XDG_DATA_DIRS="$HOME/.apps/wine-ge/share:$XDG_DATA_DIRS"' >> ~/.bashrc
-        echo "Добавлено в PATH. Перезапустите терминал или выполните: source ~/.bashrc"
-    fi
     export PATH="$HOME/.apps/wine-ge/bin:$PATH"
     export XDG_DATA_DIRS="$HOME/.apps/wine-ge/share:$XDG_DATA_DIRS"
     sleep 1 
@@ -357,46 +341,35 @@ echo "какой браузер ставить?"
 echo "!!! все браузеры будут установленны через flatpak с flathub !!!"
 
 function option1() {
-    flatpak install flathub org.mozilla.firefox
-    cat /usr/local/bin/firefox << EOF
-flatpak run org.mozilla.firefox
-EOF
-
-    
+    flatpak install flathub org.mozilla.firefox -y
 }
 
 function option2() {
-    flatpak install flathub org.chromium.Chromium
-
+    flatpak install flathub org.chromium.Chromium -y
 }
 
 function option3() {
-    flatpak install flathub com.brave.Browser
-
+    flatpak install flathub com.brave.Browser -y 
 }
-function option4() {
-    flatpak install flathub io.github.ungoogled_software.ungoogled_chromium
 
+function option4() {
+    flatpak install flathub io.github.ungoogled_software.ungoogled_chromium -y
 }
 
 function option5() {
-    flatpak install flathub io.gitlab.librewolf-community
-
+    flatpak install flathub io.gitlab.librewolf-community -y 
 }
 
 function option6() {
-    flatpak install flathub com.github.micahflee.torbrowser-launcher
-
+    flatpak install flathub com.github.micahflee.torbrowser-launcher -y
 }
 
 function option7() {
-    flatpak install flathub ru.yandex.Browser
-
+    flatpak install flathub ru.yandex.Browser -y
 }
 
 function option8() {
-    flatpak install flathub org.kde.falkon
-
+    flatpak install flathub org.kde.falkon -y
 }
 
 function option9() {
@@ -406,7 +379,7 @@ function option9() {
 echo "Выберите вариант:"
 echo "1) firefox    --open source"
 echo "2) Chomium    -open source"
-echo "2) brave    -open source"
+echo "3) brave    -open source"
 echo "4) ungoogle-chroium    --open source"
 echo "5) libre-wolf    --open source - анонимность"
 echo "6) tor    - полная анонимность !! используте в благих целях !!     -open source"
