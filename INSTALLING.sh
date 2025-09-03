@@ -695,10 +695,14 @@ chown $USERNAME:$USERNAME /mnt/home/$USERNAME/.apps
 artix-chroot /mnt sh -c 'echo "Welcome to QuasarLinux" > /etc/motd'
 artix-chroot /mnt mkinitcpio -P
 sleep 2
-# artix-chroot /mnt git clone https://github.com/b-e-n-z1342/Systemd-rc
-# artix-chroot /mnt chmod +x /Systemd-rc/install
-# cp -r /mnt/Systemd-rc /mnt/home/$USERNAME/.apps
-# artix-chroot /mnt /home/$USERNAME/.apps/Systemd-rc/install
+
+
+artix-chroot /mnt git clone https://github.com/b-e-n-z1342/Systemd-rc
+artix-chroot /mnt chmod +x /Systemd-rc/install
+cp -r /mnt/Systemd-rc /mnt/home/$USERNAME/.apps
+artix-chroot /mnt /home/$USERNAME/.apps/Systemd-rc/install
+
+
 clear
 read -p "Вы хотите зайти в chroot? (Y/n): " answer
 case ${answer:0:1} in
