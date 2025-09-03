@@ -51,7 +51,7 @@ function plasma() {
 }
 
 function xfce4() {
-    sudo pacman -S --needed xfce4 thunar lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
+    sudo pacman -S --needed xfce4 thunar xorg lightdm lightdm-openrc lightdm-gtk-greeter lightdm-gtk-greeter-settings  --noconfirm
     sudo rc-update add lightdm default
 }
 
@@ -229,7 +229,6 @@ clear
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "QuasarLinux имеет фишку которая является основной!"
 echo "это -- блокировка телеметрии"
-echo "около 60-80% системы без телеметрии, к релизу будет 90-99%"
 echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
 
 sleep 5
@@ -263,7 +262,7 @@ sudo usermod -aG elogind $(whoami)
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка звука..."
-sudo pacman -Rdd --noconfirm jack2  
+#sudo pacman -Rdd --noconfirm jack2  
 sleep 1
 sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
 sleep 5
@@ -291,16 +290,6 @@ BASHRC_EOF
 sudo rc-update add elogind default
 sudo rc-update add pipewire-pulse default
 
-
-sudo cat << 'EOF' > /etc/os-release
-NAME="QuasarLinux"
-VERSION="0.5-BETA.1"
-PRETTY_NAME="Quasar Linux (Artix base)"
-ID=QuasarLinux
-ID_LIKE=artix
-ANSI_COLOR="0;36"
-HOME_URL="https://b-e-n-z1342.github.io"
-EOF
 sudo rm /etc/artix-release
 sudo cat > /etc/quasar-release << EOF
 
@@ -326,7 +315,7 @@ sudo rm -rf /var/tmp/*
 
 sudo tee /etc/os-release << EOF
 NAME="QuasarLinux"
-VERSION="0.2-BETA"
+VERSION="0.5-BETA.1"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=QuasarLinux
 ID_LIKE=artix
