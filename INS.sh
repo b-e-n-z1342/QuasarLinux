@@ -1,6 +1,6 @@
 #!/bin/bash
 pacman -Syy 
-pacman -S terminus-font wget curl dialog --noconfirm
+pacman -S terminus-font wget curl --noconfirm
 setfont ter-v20n
 clear
 echo "=================================================================================================
