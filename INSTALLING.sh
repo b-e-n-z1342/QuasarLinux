@@ -497,7 +497,7 @@ if [ "$UEFI_MODE" -eq 1 ]; then
         artix-chroot /mnt efibootmgr -b 0000 -B
         artix-chroot /mnt cp /boot/vmlinuz-linux-zen /boot/efi/vmlinuz-linux-zen.efi
         artix-chroot /mnt cp /boot/initramfs-linux-zen.img /boot/efi/initramfs-linux-zen.img
-        artix-chroot /mnt efibootmgr -c -d "$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen.efi' -u 'root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img'
+        artix-chroot /mnt efibootmgr -c -d "$DISK" -p 1 -L "QuasarLinux" -l '\vmlinuz-linux-zen.efi' -u "root=UUID=$ROOT_UUID rw initrd=\initramfs-linux-zen.img"
     }
     function refind() {
         artix-chroot /mnt pacman -S efibootmgr os-prober refind --noconfirm
