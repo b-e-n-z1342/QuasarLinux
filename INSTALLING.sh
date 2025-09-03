@@ -314,7 +314,7 @@ export UEFI_MODE=$UEFI_MODE
 export DISK=$DISK
 export BOOT_PART=$BOOT_PART
 clear
-
+EOF
 sleep 5
 # Детекция и установка драйверов GPU
 echo "Определение видеокарты..."
@@ -322,36 +322,31 @@ gpu_info=$(lspci -nn | grep -i 'VGA\|3D\|Display' | head -1)  # Берем то�
 
 if echo "$gpu_info" | grep -qi "AMD"; then
     echo "Обнаружена видеокарта AMD"
-    pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau
+    artix-chroot /mnt pacman -S --noconfirm mesa vulkan-radeon libva-mesa-driver mesa-vdpau
 elif echo "$gpu_info" | grep -qi "Intel"; then
     echo "Обнаружена видеокарта Intel"
-    pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver
+    artix-chroot /mnt pacman -S --noconfirm mesa vulkan-intel intel-media-driver libva-intel-driver
 elif echo "$gpu_info" | grep -qi "NVIDIA"; then
     echo "Обнаружена видеокарта NVIDIA"
     echo "!!! NVIDIA драйвера могут быть не стабильны и иметь проблемы с Wayland !!!"
     sleep 5
-    pacman -S --noconfirm nvidia nvidia-utils nvidia-settings lib32-nvidia-utils
+    artix-chroot /mnt pacman -S --noconfirm nvidia nvidia-utils nvidia-settings lib32-nvidia-utils
 elif echo "$gpu_info" | grep -qi "QXL"; then
     echo "Обнаружена виртуальная видеокарта QXL (QEMU)"
-    pacman -S --noconfirm xf86-video-qxl mesa
+    artix-chroot /mnt pacman -S --noconfirm xf86-video-qxl mesa
     # Установка гостевых утилит для QEMU
-    if command -v rc-update &> /dev/null; then
-        pacman -S --noconfirm qemu-guest-agent
-        rc-update add qemu-guest-agent default
-    fi
+    artix-chroot /mnt pacman -S --noconfirm qemu-guest-agent
+    artix-chroot /mnt rc-update add qemu-guest-agent default
 elif echo "$gpu_info" | grep -qi "Virtio"; then
     echo "Обнаружена виртуальная видеокарта Virtio (QEMU/KVM)"
-    pacman -S --noconfirm xf86-video-virtio mesa
-    # Установка гостевых утилит для Virtio
-    if command -v rc-update &> /dev/null; then
-        pacman -S --noconfirm qemu-guest-agent
-        rc-update add qemu-guest-agent default
-    fi
+    artix-chroot /mnt pacman -S --noconfirm xf86-video-virtio mesa
+    artix-chroot /mnt pacman -S --noconfirm qemu-guest-agent
+    artix-chroot /mnt rc-update add qemu-guest-agent default
 else
     echo "Видеокарта не определена, устанавливаю базовые драйверы"
     echo "Осторожно: низкая производительность!"
     sleep 3
-    pacman -S --noconfirm mesa xf86-video-vesa xf86-video-fbdev
+    artix-chroot /mnt pacman -S --noconfirm mesa xf86-video-vesa xf86-video-fbdev
 fi
 
 # Установка общих firmware пакетов
@@ -367,7 +362,7 @@ rc-update add udev default
 rc-update add elogind default
 rc-update add acpid default
 
-EOF
+
 printf '=%.0s' $(seq 1 $(tput cols))
 function Kaliningrad() {
     artix-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Kaliningrad /etc/localtime
