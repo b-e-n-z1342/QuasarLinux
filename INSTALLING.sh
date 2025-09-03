@@ -59,6 +59,8 @@ case $home_parted_use in
     2) non_home ;;
     *) echo "неверный выбор, попробуйте ещё раз" ;;
 esac
+clear
+lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT $DISK
 if [ $UEFI_MODE -eq 1 ]; then
     read -p "Введите раздел для EFI (например, sda1): " BOOT_PART
     BOOT_PART="/dev/$BOOT_PART"
@@ -281,7 +283,7 @@ PRETTY_NAME="Quasar Linux (Artix base)"
 ID=quasar
 ID_LIKE=artix
 ANACONDA_ID="quasar"
-VERSION="1.0"
+VERSION="0.5-beta.1"
 VERSION_ID="1.0"
 BUILD_ID="rolling"
 ANSI_COLOR="0;36"
@@ -652,6 +654,19 @@ EOFD
         2) syslinux ;;
     esac
 fi
+tee > /mnt/usr/lib/os-release << 'EOF'
+NAME="Quasar Linux"
+PRETTY_NAME="Quasar Linux (Artix base)"
+ID=quasar
+ID_LIKE=artix
+ANACONDA_ID="quasar"
+VERSION="0.5-beta.1"
+VERSION_ID="0.5"
+BUILD_ID="rolling"
+ANSI_COLOR="0;36"
+HOME_URL="https://b-e-n-z1342.github.io"
+LOGO=quasar-logo
+EOF
 
 sleep 2
 clear
