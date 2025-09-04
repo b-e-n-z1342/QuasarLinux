@@ -350,17 +350,17 @@ else
 fi
 
 # Установка общих firmware пакетов
-pacman -S --noconfirm linux-firmware
+artix-chroot /mnt pacman -S --noconfirm linux-firmware
 
 # Установка базовых системных пакетов
-pacman -S vim nano git curl wget 
+artix-chroot /mnt pacman -S vim nano git curl wget 
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
-rc-update add dbus default
-rc-update add udev default
-rc-update add elogind default
-rc-update add acpid default
+artix-chroot /mnt rc-update add dbus default
+artix-chroot /mnt rc-update add udev default
+artix-chroot /mnt rc-update add elogind default
+artix-chroot /mnt rc-update add acpid default
 
 
 printf '=%.0s' $(seq 1 $(tput cols))
@@ -497,103 +497,6 @@ if [ "$UEFI_MODE" -eq 1 ]; then
     function refind() {
         artix-chroot /mnt pacman -S efibootmgr os-prober refind --noconfirm
         artix-chroot /mnt refind-install
-        artix-chroot /mnt tee /boot/efi/EFI/refind/refind.conf << EOF
-timeout 5
-default_selection "Quasar Linux"
-
-# Скрыть пользовательский интерфейс rEFInd
-hideui all
-# Размер иконок
-icon_size 128
-
-# Шрифт (можно изменить)
-font_size 16
-
-# Путь к теме (раскомментировать если есть тема)
-#use_graphics_for linux,osx,windows
-#banner hostname.bmp
-#banner_scale fillscreen
-
-# Цвета текста
-text_mode true
-selection_color cyan
-
-
-# Сканировать все Linux ядра
-scan_all_linux_kernels true
-
-# Также сканировать вторичные файловые системы
-also_scan_files ext4,vfat,btrfs
-
-# Сканировать для других ОС
-scanfor manual,external,optical
-
-# Игнорировать определенные файлы
-dont_scan_files vmlinuz.old,initrd.img.old
-
-# Общие параметры ядра
-extra_kernel_version_strings linux,linux-lts,linux-zen
-
-# Параметры по умолчанию для всех Linux записей
-extra_kernel_options root=UUID="$ROOT_UUID" rw quiet loglevel=3
-
-# Инициализация (для OpenRC)
-initrd /boot/initramfs-%v.img
-
-
-# Основная зап case $boись Quasar Linux
-menuentry "Quasar Linux" {
-    icon /EFI/refind/icons/os_linux.png
-    volume "QUASR_ROOT"
-    loader /boot/vmlinuz-linux-zen
-    initrd /boot/initramfs-linux-zen.img
-    options "root=UUID="$ROOT_UUID" rw initrd=/boot/initramfs-linux.img quiet"
-    enabled true
-}
-# Режим восстановления
-menuentry "QuasarLinux falback" {
-    icon /EFI/refind/icons/os_linux.png
-    loader /boot/vmlinuz-linux-zen
-    initrd /boot/initramfs-linux-zen-fallback.img
-    options "root=UUID="$ROOT_UUID" rw single init=/bin/bash"
-}
-
-disable_autoboot no
-disable_manual no
-
-use_graphics_for linux,osx,windows
-
-
-auto_detect_best_resolution true
-
-
-usb_delay 2000
-
-set ostype Linux
-set rootpart UUID=ваш_uuid_root
-
-showtools shutdown,reboot,firmware
-
-tool shutdown {
-    icon /EFI/refind/icons/shutdown.png
-    loader /EFI/refind/icons/shutdown.efi
-}
-
-tool reboot {
-    icon /EFI/refind/icons/reboot.png
-    loader /EFI/refind/icons/reboot.efi
-}
-
-tool firmware {
-    icon /EFI/refind/icons/firmware.png
-    loader /EFI/refind/icons/firmware.efi
-}
-
-banner_message "Добро пожаловать в rEFInd Boot Manager"
-
-bootprompt_message "Нажмите любую клавишу для меню загрузки..."
-
-EOF
     }
 
     dialog --title "Выбор варианта" \
