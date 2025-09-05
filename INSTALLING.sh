@@ -353,7 +353,7 @@ fi
 artix-chroot /mnt pacman -S --noconfirm linux-firmware
 
 # Установка базовых системных пакетов
-artix-chroot /mnt pacman -S vim nano git curl wget 
+artix-chroot /mnt pacman -S --noconfirm nano git curl wget 
 sleep 2
 # Активация базовых сервисов
 echo "Активация базовых OpenRC сервисов..."
