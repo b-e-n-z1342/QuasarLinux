@@ -629,3 +629,4 @@ umount -R /mnt 2>/dev/null || true
 echo "Размонтирование разделов..."
 umount -R /mnt 2>/dev/null || true
 [ -n "${SWAP_PART+x}" ] && swapoff "$SWAP_PART" 2>/dev/null
+reboot
