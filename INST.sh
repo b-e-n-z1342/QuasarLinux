@@ -192,6 +192,7 @@ case $choice in
     3) quasar ;;
     4) ge ;;
     5) proton ;;
+    7) port ;;
     6) no ;;
     *) echo "Неверный выбор" ;;
 esac
@@ -228,10 +229,10 @@ fi
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "QuasarLinux имеет фишку которая является основной!"
-echo "это -- блокировка телеметрии"
+echo "блокировка телеметрии"
 echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
 
-sleep 5
+sleep 2
 
 sudo tee /etc/host << 'EOF'
 0.0.0.0 vortex.data.microsoft.com
@@ -263,16 +264,39 @@ clear
 printf '=%.0s' $(seq 1 $(tput cols))
 echo "Настройка звука..."
 #sudo pacman -Rdd --noconfirm jack2  
-sleep 1
-sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
-sleep 5
+pipewire_sound() {
+    sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
+    clear
+    sudo chmod +x /etc/init.d/pipewire
+    sudo rc-update add pipewire default
+    sudo rc-update add pipewire-pulse default
+}
 
-clear
-printf '=%.0s' $(seq 1 $(tput cols))
-sleep 2
+pulseaudio_sound() {
+    sudo pacman -S --noconfirm  --overwrite '*' --needed pulseaudio pulseaudio-alsa pulseaudio-jack
+    sudo rc-update add pulseaudio --user
+}
 
-sudo chmod +x /etc/init.d/pipewire
-sudo rc-update add pipewire default
+jack() {
+    sudo pacman --noconfirm  --overwrite '*' --needed jack2 jack2-dbus jack_utils
+}
+dialog --title "Меню" --menu "Выберите звуковой сервер: " 15 70 5 \
+1 "pipewire" \
+2 "pulseaudio" \
+3 "jack2" 2>/tmp/audio.txt
+# Проверяем, не нажал ли пользователь Cancel или ESC
+if [ $? -ne 0 ]; then
+    clear
+    echo "пропускаем"
+    rm -f /tmp/audio.txt    
+fi
+audio=$(cat /tmp/audio.txt)
+
+case $audio in
+    1) pipewire_sound ;;
+    2) pulseaudio_sound ;;
+    4) jack ;;
+esac
 
 echo "Финальная настройка системы..."
 # Добавляем пользователя в нужные группы
@@ -288,9 +312,7 @@ BASHRC_EOF
 
 
 sudo rc-update add elogind default
-sudo rc-update add pipewire-pulse default
 
-sudo rm /etc/artix-release
 sudo cat > /etc/quasar-release << EOF
 
 EOF
