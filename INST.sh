@@ -25,7 +25,7 @@ sudo pacman -Syy
 sudo pacman -S --needed wayland seatd lib32-gamemode pipewire-jack polkit polkit-qt6 polkit-kde-agent lib32-alsa-plugins lib32-libpulse gst-plugins-base gst-plugins-good dialog  --noconfirm
 sudo pacman -S --needed gst-plugins-bad  gst-plugins-ugly pavucontrol flatpak gvfs gvfs-mtp gvfs-smb polkit x264 x265 openh264 gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ffmpeg  --noconfirm
 
-
+dialog --title "Установка базы" --msgbox "Базовые пакеты установлены!" 10 50
 # установка DE
 echo "Выберите DE или WM."
 function hypr() {
@@ -124,20 +124,15 @@ clear
 
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 # flatpak install flathub -y
-printf '=%.0s' $(seq 1 $(tput cols))
-echo "Настройка Wine"
-echo "Wine -- это не эмулятор, а альтернативная реализация Windows API, для виртуальных машин его установка излишня"
-echo "но у него есть куча версий! какую ставить ?"
-
-function wine() {
+wine() {
     sudo pacman -S wine winetricks  --noconfirm
 }
 
-function staging() {
+staging() {
     sudo pacman -S wine-staging winetricks  --noconfirm
 }
 
-function quasar() {
+quasar() {
     sudo pacman -S wine-staging winetricks gamemode --noconfirm
     wineboot --init
     sleep 2
@@ -149,7 +144,7 @@ function quasar() {
     clear
 }
 
-function ge() {
+ge() {
     wget -P /tmp https://github.com/GloriousEggroll/wine-ge-custom/releases/download/GE-Proton8-26/wine-lutris-GE-Proton8-26-x86_64.tar.xz
     sleep 1
     tar -xf /tmp/wine-lutris-GE-Proton8-26-x86_64.tar.xz -C ~/.apps
@@ -162,30 +157,31 @@ function ge() {
     wineboot --init
 }
 
-function proton() {
+proton() {
     wget -P /tmp https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton10-13/GE-Proton10-13.tar.gz
     tar -xf /tmp/GE-Proton10-13.tar.gz -C ~/.apps
     mv GE-Proton10-13 proton-ge
     sudo ln -sf proton-ge/files/bin/* /usr/local/bin
     sudo ln -sf proton-ge/files/share/* /usr/local/share
 }
-function port() {
+
+port() {
     yay -S protoroton
 }
 
-function no() {
-    echo "OK"
-}
-echo "Выберите вариант:"
-echo "1) обычный wine"
-echo "2) wine-staging"
-echo "3) wine-staging настроенный для QuasarLinux"
-echo "4) wine-ge            --для игр"
-echo "5) proton-ge          --эксперементально"
-echo "6) PortProton         --рекомендуется новичкам"
-echo "7) без wine           --рекомендуется для виртуальных машин"
-read -p "Введите номер (1-6): " choice
-
+dialog --title "Меню" --menu "Выберите нужный wine: " 15 70 5 \
+1 "Wine" \
+2 "Wine-staging" \
+3 "Wine-staging с DXVK/VKD3D" \
+4 "Wine-ge" \
+5 "Proton-ge" \
+6 "PortProton" 2>/tmp/wine.txt
+if [ $? -ne 0 ]; then
+    clear
+    echo "пропускаем"
+    rm -f /tmp/wine.txt    
+fi
+$chice=$(cat /tmp/wine.txt)
 case $choice in
     1) wine ;;
     2) staging ;;
@@ -196,6 +192,7 @@ case $choice in
     6) no ;;
     *) echo "Неверный выбор" ;;
 esac
+rm -f /tmp/wine.txt 
 clear
 
 printf '=%.0s' $(seq 1 $(tput cols))
@@ -228,9 +225,7 @@ EOF
 fi
 clear
 printf '=%.0s' $(seq 1 $(tput cols))
-echo "QuasarLinux имеет фишку которая является основной!"
-echo "блокировка телеметрии"
-echo "блокировка тронет только системные компаненты QuasarLinux {wine, DE, браузер и тд}"
+echo "Блокировка телеметрии"
 
 sleep 2
 
@@ -345,12 +340,6 @@ ANSI_COLOR="0;36"
 HOME_URL="https://b-e-n-z1342.github.io"
 EOF
 
-clear
-printf '=%.0s' $(seq 1 $(tput cols))
-echo "установка подошла к концу, но остался один вопрос"
-echo "какой браузер ставить?"
-echo "!!! все браузеры будут установленны через flatpak с flathub !!!"
-
 function option1() {
     flatpak install flathub org.mozilla.firefox -y
 }
@@ -383,23 +372,23 @@ function option8() {
     flatpak install flathub org.kde.falkon -y
 }
 
-function option9() {
-    echo "OK"
-}
+dialog --title "Меню" --menu "Выберите DE/WM: " 15 70 5 \
+1 "Firefox" \
+2 "Chromium" \
+3 "Brave" \
+4 "ungoogle-chromium" \
+5 "Librewolf" \
+6 "Tor" \
+7 "Yandex" \
+8 "falkon" 2>/tmp/web.txt
+if [ $? -ne 0 ]; then
+    clear
+    echo "пропускаем"
+    rm -f /tmp/web.txt    
+fi
+web=$(cat /tmp/web.txt)
 
-echo "Выберите вариант:"
-echo "1) firefox    --open source"
-echo "2) Chomium    -open source"
-echo "3) brave    -open source"
-echo "4) ungoogle-chroium    --open source"
-echo "5) libre-wolf    --open source - анонимность"
-echo "6) tor    - полная анонимность !! используте в благих целях !!     -open source"
-echo "7) Yandex"
-echo "8) falkon    --open source -легкий"
-echo "9) без браузера"
-read -p "Введите номер (1-9): " choice
-
-case $choice in
+case $web in
     1) option1 ;;
     2) option2 ;;
     3) option3 ;;
@@ -411,8 +400,8 @@ case $choice in
     9) option9 ;;
     *) echo "Неверный выбор" ;;
 esac
-
-
+rm -f /tmp/web.txt   
+clear
 echo "Установка завершена! Перезагрузка через 5 секунд..."
 sleep 5
 sudo reboot
