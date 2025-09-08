@@ -262,9 +262,64 @@ echo "Настройка звука..."
 pipewire_sound() {
     sudo pacman -S --noconfirm  --overwrite '*' --needed pipewire lib32-libpipewire libpipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pipewire-audio pipewire-openrc pipewire-pulse-openrc lib32-pipewire-jack
     clear
+    sudo cat /etc/init.d/wireplumber << EOF
+#!/sbin/openrc-run
+
+command="/usr/bin/wireplumber"
+command_args=""
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need pipewire
+    need dbus
+    need elogind
+}
+EOF
+    sudo cat /etc/init.d/pipewire << EOF
+#!/sbin/openrc-run
+
+command="/usr/bin/pipewire"
+command_args=""
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need dbus
+    need elogind
+}
+EOF
+    sudo cat /etc/asound.conf << EOF
+pcm.!default {
+    type hw
+    card 0
+}
+
+ctl.!default {
+    type hw
+    card 0
+}
+EOF
+    sudo cat ~/.asoundrc << EOF
+pcm.!default {
+    type plug
+    slave.pcm "pipewire"
+}
+
+pcm.pipewire {
+    type pipewire
+    playback_ports [ "alsa_output.pci-0000_00_1f.3.analog-stereo" ]
+    capture_ports  [ "alsa_input.pci-0000_00_1f.3.analog-stereo" ]
+}
+
+ctl.!default {
+    type pipewire
+}
+EOF
+    sudo pacman -S pavucontrol --noconfirm
     sudo chmod +x /etc/init.d/pipewire
+    sudo chmod +x /etc/init.d/wireplumber
     sudo rc-update add pipewire default
     sudo rc-update add pipewire-pulse default
+    sudo usermod -aG audio $USER
 }
 
 pulseaudio_sound() {
@@ -273,7 +328,7 @@ pulseaudio_sound() {
 }
 
 jack() {
-    sudo pacman --noconfirm  --overwrite '*' --needed jack2 jack2-dbus jack_utils
+    sudo pacman --noconfirm  --overwrite '*' --needed jack2 jack2-dbus jack_utils lib32-jack2 
 }
 dialog --title "Меню" --menu "Выберите звуковой сервер: " 15 70 5 \
 1 "pipewire" \
