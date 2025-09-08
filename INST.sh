@@ -332,7 +332,7 @@ sudo rm -rf /var/tmp/*
 
 sudo tee /etc/os-release << EOF
 NAME="QuasarLinux"
-VERSION="0.5-BETA.1"
+VERSION="0.5-BETA.2"
 PRETTY_NAME="Quasar Linux (Artix base)"
 ID=QuasarLinux
 ID_LIKE=artix
