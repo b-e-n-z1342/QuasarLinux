@@ -229,7 +229,7 @@ echo "Блокировка телеметрии"
 
 sleep 2
 
-sudo tee /etc/host << 'EOF'
+sudo tee /etc/hosts << 'EOF'
 0.0.0.0 vortex.data.microsoft.com
 0.0.0.0 settings-win.data.microsoft.com
 0.0.0.0 telemetry.microsoft.com
