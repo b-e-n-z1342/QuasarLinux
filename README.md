@@ -38,9 +38,10 @@ QuasarLinux - это не просто ещё один дистрибутив, �
 | Интернет    |   обязателен   |  обязательно |
 
 ## Ссылки
-[wiki](https://github.com/b-e-n-z1342/QuasarLinux/wiki)
-[Сайт](https://b-e-n-z1342.github.io/QuasarLinux)
+[QuasarLinux wiki](https://github.com/b-e-n-z1342/QuasarLinux/wiki)
 
-компаненты:
+[Сайт QuasarLinux](https://b-e-n-z1342.github.io/QuasarLinux)
+
+### компаненты:
 [Systemd-rc](https://b-e-n-z1342.github.io/SystemRC)
 [Fast-chroot](https://b-e-n-z1342.github.io/Fastchroot)
