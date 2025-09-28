@@ -1,0 +1,11 @@
+NAME="Quasar Linux"
+PRETTY_NAME="Quasar Linux"
+ID=quasar
+BUILD_ID=rolling
+ANSI_COLOR="38;2;23;147;209"
+HOME_URL="https://b-e-n-z1342.github.io"
+DOCUMENTATION_URL="https://github.com/b-e-n-z1342/QuasarLinux/wiki"
+SUPPORT_URL=#"
+BUG_REPORT_URL="https://github.com/b-e-n-z1342/QuasarLinux/issues"
+PRIVACY_POLICY_URL="#"
+LOGO=quasar-logo

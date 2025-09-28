@@ -1,0 +1,7 @@
+#wget https://ftp.gnu.org/gnu/glibc/glibc-2.40.tar.xz
+wget https://ftp.gnu.org/gnu/make/make-4.4.1.tar.gz
+wget https://ftp.gnu.org/gnu/patch/patch-2.7.6.tar.xz
+wget https://www.kernel.org/pub/linux/utils/util-linux/v2.40/util-linux-2.40.2.tar.xz
+wget https://mirror.linuxfromscratch.ru/patches/lfs/12.2/glibc-2.40-fhs-1.patch
+wget https://mirror.linuxfromscratch.ru/patches/lfs/12.2/coreutils-9.5-i18n-2.patch
+wget https://ftp.gnu.org/gnu/coreutils/coreutils-9.5.tar.xz
