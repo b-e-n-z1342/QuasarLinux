@@ -1,2 +1,0 @@
-[2025-09-28T21:54:18+0300] [PACMAN] Running 'pacman -r QuasarLinux -Sy --config=/etc/pacman.conf --cachedir=QuasarLinux/var/cache/pacman/pkg --noconfirm coreutils'
-[2025-09-28T21:54:18+0300] [PACMAN] synchronizing package lists
