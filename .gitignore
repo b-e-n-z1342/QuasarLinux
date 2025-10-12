@@ -7,3 +7,7 @@ sources/*.gz
 *.tar.*
 *.iso
 *.img
+var/
+proc/
+dev/
+tmp/
