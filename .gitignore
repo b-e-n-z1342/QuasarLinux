@@ -1,0 +1,13 @@
+var/cache/pacman/pkg/
+var/lib/pacman/
+*.pkg.tar.*
+sources/*.tar.*
+sources/*.zip
+sources/*.gz
+*.tar.*
+*.iso
+*.img
+var/
+proc/
+dev/
+tmp/
