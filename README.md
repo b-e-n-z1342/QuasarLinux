@@ -9,7 +9,7 @@
 ### *Чистый. Быстрый. Под твоим контролем.*
   
 ![Static Badge](https://img.shields.io/badge/Статус-Активная_разработка-brightgreen?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/Версия-1.0_Alpha-blue?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
 
 </div>
 
@@ -19,7 +19,6 @@
 [![Сайт](https://img.shields.io/badge/🌐-Официальный_сайт-2D2B55?style=for-the-badge&logo=google-chrome)](https://b-e-n-z1342.github.io/QuasarLinux)
 [![GitLab](https://img.shields.io/badge/💻-Исходный_код-FF6C37?style=for-the-badge&logo=gitlab)](https://gitlab.com/users/Quasar_benz/projects)
 [![Telegram](https://img.shields.io/badge/📢-Telegram_канал-26A5E4?style=for-the-badge&logo=telegram)](https://t.me/quasar_linux)
-[![Download](https://img.shields.io/badge/🪩-Зеркальный-репозиторий-F34B1D?style=for-the-badge&logo=sourceforge)](https://sourceforge.net/u/quasarbenz/profile)
 
 </div>
 
