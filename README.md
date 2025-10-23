@@ -1,35 +1,33 @@
+<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable html -->
+<!-- markdownlint-disable no-duplicate-header -->
+
 # QuasarLinux
-QuasarLinux - дистрибутив основанный на Artix с OpenRC. 
 
-## Свои особенности
-1. Базовая синтаксическая совместимость с Systemd
-2. Fast-chroot вместо Artix-chroot
-## Особености на уровне пользователя
-- выбор DE/WM
-- выбор форков wine/Proton-GE
-- pulseaudio/pipewire/jack2
-## Изменения
-В данном репозитории, я добавил те изменения которые есть в QuasarLinux. Neofetch который здесь только с добавлением логотипа QuasarLinux.
-## Философия
-QuasarLinux - это не просто ещё один дистрибутив, а инструмент, который пытается быть универсальным и предсказуемым, тем где пользователь сам решает что ему делать. 
+<hr>
+<div align="center">
+  <a href="https://b-e-n-z1342.github.io/QuasarLinux" target="_blank">
+    <img alt="Сайт" src="" />
+  </a>
+  <a href="https://gitlab.com/users/Quasar_benz/projects" target="_blank">
+    <img alt="" src="https://about.gitlab.com/images/press/gitlab-logo-500-rgb.png" />
+  </a>
 
-## Цель
-Основная цель - это создать то что может быть не обычным и даже изменить превычное представление о Linux. Оно должно быть универсальным и полностью открытым.
+</div>
 
-## Системные требования
-| Комплектующие | Минимальные | Рекомендованные |
-|-------------|-------------|-------------|
-|  процессор  | X86_64    | X86_64 SSE 4.1, VT-x/AMD-v    |
-|     ОЗУ     | 1гб    | 4гб    |
-| Видеокарта  | vga 1024/768 | С Vulkan (AMD/Intel)  |
-| Место на диске | 20гб     | 40гб       |
-| Интернет    |   обязателен   |  обязательно |
+<div align="center">
 
-## Ссылки
-[QuasarLinux wiki](https://github.com/b-e-n-z1342/QuasarLinux/wiki)
+  <a href="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2019_Logo.svg" target="_blank">
+    <img alt="Telegram" src="https://t.me/quasar_linux" />
+  </a>
+  <a href="https://sourceforge.net/u/quasarbenz/profile" target="_blank">
+    <img alt="SoruceForge" src="https://upload.wikimedia.org/wikipedia/commons/8/8f/SourceForge_logo_transparent.svg" />
+  </a>
 
-[Сайт QuasarLinux](https://b-e-n-z1342.github.io/QuasarLinux)
+</div> 
 
-### компаненты:
-[Systemd-rc](https://b-e-n-z1342.github.io/SystemRC)
-[Fast-chroot](https://b-e-n-z1342.github.io/Fastchroot)
+## Что это? 
+
+QuasarLinux - это Artix base дистрибутив с системой инициализации OpenRC. 
+
+## Для чего он? 
