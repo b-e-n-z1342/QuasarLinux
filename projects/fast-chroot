@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+GIT_REPO="https://github.com/b-e-n-z1342/Fast-chroot.git"
+DIR_REPO="fchroot"
+MAIN="main.go"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+error() {
+	echo -e "${RED}err: $1${NC}" >&2
+   	exit 1
+}
+
+info() {
+    echo -e "${GREEN}=> $1${NC}"
+}
+
+for cmd in go cp sudo; do
+    if ! command -v "$cmd" &> /dev/null; then
+        error "'$cmd' не установлен"
+    fi
+done
+
+git clone "$GIT_REPO" "$DIR_REPO" || {
+	echo "Ошибка клонирования! Проверьте URL и доступ в интернет."
+	exit 1
+} 
+
+cd "DIR_REPO" || exit 1
+
+go build -o fast-chroot $MAIN"
